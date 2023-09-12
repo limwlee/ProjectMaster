@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:project_master/login_page.dart';
 
 class RegistrationPage extends StatefulWidget {
   @override
@@ -8,6 +10,7 @@ class RegistrationPage extends StatefulWidget {
 
 class _RegistrationPageState extends State<RegistrationPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -87,7 +90,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     ),
                   );
 
-                  // Optionally, you can navigate to another page or handle the email verification flow here.
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => LoginPage(),
+                  ));
 
                 } catch (e) {
                   // Handle the specific registration error
@@ -112,9 +117,41 @@ class _RegistrationPageState extends State<RegistrationPage> {
               },
               child: Text('Register'),
             ),
+            // SizedBox(height: 16),
+            // ElevatedButton(
+            //   onPressed: _signInWithGoogle,
+            //   child: Text('Sign up with Google'),
+            // ),
+
           ],
         ),
       ),
     );
   }
+  // Future<void> _signInWithGoogle() async {
+  //   try {
+  //     final GoogleSignInAccount? googleSignInAccount = await _googleSignIn.signIn();
+  //     if (googleSignInAccount == null) return;
+  //
+  //     final GoogleSignInAuthentication googleSignInAuthentication = await googleSignInAccount.authentication;
+  //     final AuthCredential credential = GoogleAuthProvider.credential(
+  //       accessToken: googleSignInAuthentication.accessToken,
+  //       idToken: googleSignInAuthentication.idToken,
+  //     );
+  //
+  //     final UserCredential userCredential = await _auth.signInWithCredential(credential);
+  //
+  //     // Check if the user is newly registered (first time signing in with Google).
+  //     if (userCredential.additionalUserInfo?.isNewUser == true) {
+  //       // Perform any additional actions for new users here, if needed.
+  //     }
+  //
+  //     Navigator.of(context).push(MaterialPageRoute(
+  //       builder: (context) => LoginPage(),
+  //     ));
+  //   } catch (e) {
+  //     print('Error signing in with Google: $e');
+  //   }
+  // }
 }
+

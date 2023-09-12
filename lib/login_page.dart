@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:project_master/forgot_password_page.dart';
 import 'package:project_master/main_page.dart';
 import 'package:project_master/registration_page.dart';
 
@@ -86,7 +87,9 @@ class _LoginPageState extends State<LoginPage> {
               children: [
                 GestureDetector(
                   onTap: () {
-                    // Add password reset logic here
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => ForgotPasswordPage(),
+                    ));
                   },
                   child: Text('Forgot Password?'),
                 ),
