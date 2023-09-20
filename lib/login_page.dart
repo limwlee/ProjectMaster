@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:project_master/forgot_password_page.dart';
 import 'package:project_master/main_page.dart';
 import 'package:project_master/registration_page.dart';
@@ -14,6 +15,11 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
+
+  String _loginError = '';
+
 
   @override
   Widget build(BuildContext context) {
@@ -21,93 +27,140 @@ class _LoginPageState extends State<LoginPage> {
       appBar: AppBar(
         title: const Text('Project Master'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: _emailController,
-              keyboardType: TextInputType.emailAddress,
-              decoration: InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            SizedBox(height: 16),
-            TextField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () async {
-                final String email = _emailController.text;
-                final String password = _passwordController.text;
-
-                try {
-                  final UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-                    email: email,
-                    password: password,
-                  );
-
-                  // Check if the user is verified (optional)
-                  if (userCredential.user!.emailVerified) {
-                    // Navigate to the MenuPage after successful login
-                    Navigator.of(context).pushReplacement(MaterialPageRoute(
-                      builder: (context) => MainPage(),
-                    ));
-                  } else {
-                    // Handle unverified user (optional)
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Email not verified. Please verify your email.'),
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  // Handle login error
-                  print('Login error: $e');
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Login failed. Please check your credentials.'),
-                    ),
-                  );
-                }
-              },
-              child: Text('Login'),
-            ),
-            SizedBox(height: 16),
-            Column(
+      body: Center(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => ForgotPasswordPage(),
-                    ));
-                  },
-                  child: Text('Forgot Password?'),
+                TextField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-                const SizedBox(height: 15),
-                GestureDetector(
-                  onTap: () {
-                    // Navigate to the registration page
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => RegistrationPage(),
-                    ));
+                SizedBox(height: 16),
+                TextField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () async {
+                    final String email = _emailController.text;
+                    final String password = _passwordController.text;
+
+                    try {
+                      final UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+                        email: email,
+                        password: password,
+                      );
+
+                      // Check if the user is verified (optional)
+                      if (userCredential.user!.emailVerified) {
+                        // Navigate to the MenuPage after successful login
+                        Navigator.of(context).pushReplacement(MaterialPageRoute(
+                          builder: (context) => MainPage(),
+                        ));
+                      } else {
+                        // Handle unverified user (optional)
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Email not verified. Please verify your email.'),
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      // Handle login error
+                      print('Login error: $e');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Login failed. Please check your credentials.'),
+                        ),
+                      );
+                    }
                   },
-                  child: const Text('Create an Account?'),
+                  child: Text('Login'),
+                ),
+                SizedBox(height: 5),
+                Text("OR"),
+                SizedBox(height: 5),
+                ElevatedButton.icon(
+                  onPressed: _signInWithGoogle,
+                  icon: Icon(Icons.login),
+                  label: Text('Sign In with Google'),
+                ),
+                SizedBox(height: 30),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(MaterialPageRoute(
+                          builder: (context) => ForgotPasswordPage(),
+                        ));
+                      },
+                      child: Text('Forgot Password?'),
+                    ),
+                    const SizedBox(height: 15),
+                    GestureDetector(
+                      onTap: () {
+                        // Navigate to the registration page
+                        Navigator.of(context).push(MaterialPageRoute(
+                          builder: (context) => RegistrationPage(),
+                        ));
+                      },
+                      child: const Text('Create an Account?'),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
+  Future<void> _signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleSignInAccount = await _googleSignIn.signIn();
+      if (googleSignInAccount == null) {
+        // User canceled the Google Sign-In process
+        return;
+      }
+
+      final GoogleSignInAuthentication googleSignInAuthentication = await googleSignInAccount.authentication;
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleSignInAuthentication.accessToken,
+        idToken: googleSignInAuthentication.idToken,
+      );
+
+      await _googleSignIn.signOut();
+
+      final UserCredential userCredential = await _auth.signInWithCredential(credential);
+
+      if (userCredential.user != null) {
+        Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (context) => MainPage(),
+        ));
+      }else {
+        setState(() {
+          _loginError = 'Google Sign-In failed. Please try again.';
+        });
+      }
+    } catch (e) {
+      print('Google Sign-In error: $e');
+      setState(() {
+        _loginError = 'Google Sign-In failed. Please try again.';
+      });
+    }
+  }
+
 }

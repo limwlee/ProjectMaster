@@ -1,36 +1,57 @@
 import 'package:flutter/material.dart';
-
+import 'package:project_master/pages/favorites_page.dart';
+import 'package:project_master/pages/home_page.dart';
+import 'package:project_master/pages/search_page.dart';
+import 'package:project_master/pages/setting_page.dart';
 
 class MainPage extends StatefulWidget {
   @override
-  _MainPage createState() => _MainPage();
+  _MainPageState createState() => _MainPageState();
 }
 
-class _MainPage extends State<MainPage> {
+class _MainPageState extends State<MainPage> {
   int _currentIndex = 0;
+  final PageController _pageController = PageController();
+  final List<Widget> _pages = [
+    HomePage(),
+    SearchPage(),
+    FavoritesPage(),
+    SettingPage(),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Menu Page'),
-      ),
-      body: Center(
-        child: Text('Your content goes here'),
+      // appBar: AppBar(
+      //   title: Text('Project Master'),
+      // ),
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: (int index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        children: _pages,
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (int index) {
           setState(() {
             _currentIndex = index;
+            _pageController.animateToPage(
+              index,
+              duration: Duration(milliseconds: 300),
+              curve: Curves.ease,
+            );
           });
         },
-        selectedItemColor: Colors.black, // Set the selected item color to black
-        unselectedItemColor: Colors.black, // Set the unselected item color to black
+        selectedItemColor: Colors.black,
+        unselectedItemColor: Colors.black,
         items: [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
-            label: 'Home',
+            label: 'Main',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.search),
