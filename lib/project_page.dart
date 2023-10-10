@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:project_master/project.dart';
@@ -12,8 +13,16 @@ class ProjectPage extends StatefulWidget {
 }
 
 class _ProjectPageState extends State<ProjectPage> {
+  void _showAddTaskDialog(BuildContext context) async {
+    // Check if the user is authenticated
+    final FirebaseAuth auth = FirebaseAuth.instance;
+    final User? user = auth.currentUser;
 
-  void _showAddTaskDialog(BuildContext context) {
+    if (user == null) {
+      // Handle the case where the user is not authenticated
+      return;
+    }
+
     // Initialize a list to store subtask controllers
     List<TextEditingController> subtaskControllers = [];
 
@@ -92,7 +101,7 @@ class _ProjectPageState extends State<ProjectPage> {
                           ),
                         ),
                       ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           // Get the task name from the controller
                           final String taskName = taskNameController.text;
 
@@ -127,25 +136,37 @@ class _ProjectPageState extends State<ProjectPage> {
                             }
 
                             if (!subtaskValidationFailed) {
+                              try {
+                                // Get a reference to the Firestore instance
+                                final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-                              // Create a new task document in the Firestore collection for tasks
-                              final CollectionReference tasksCollection =
-                              FirebaseFirestore.instance.collection('tasks');
-                              tasksCollection.add({
-                                'project_id': widget.project.id,
-                                'task_name': taskName,
-                                'subtasks': subtaskNames,
-                                // Add any other task-related data as needed
-                              });
+                                // Create a new task document
+                                final DocumentReference taskRef = await firestore
+                                    .collection('users')
+                                    .doc(user.uid) // User's UID
+                                    .collection('projects')
+                                    .doc(widget.project.id) // Project ID
+                                    .collection('tasks')
+                                    .add({
+                                  'name': taskName,
+                                  'subtasks': subtaskNames,
+                                });
 
-                              // Clear the text controllers
-                              taskNameController.clear();
-                              for (var controller in subtaskControllers) {
-                                controller.clear();
+                                // You can now use the taskRef if needed
+                                print('Task added with ID: ${taskRef.id}');
+
+                                // Clear the text controllers
+                                taskNameController.clear();
+                                for (var controller in subtaskControllers) {
+                                  controller.clear();
+                                }
+
+                                // Close the dialog
+                                Navigator.pop(context);
+                              } catch (e) {
+                                // Handle any errors that occur during Firestore operation
+                                print('Error saving task: $e');
                               }
-
-                              // Close the dialog
-                              Navigator.pop(context);
                             }
                           }
                         },
@@ -166,18 +187,15 @@ class _ProjectPageState extends State<ProjectPage> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title:
-        Text(widget.project.name), // Display the project name as the title
+        title: Text(widget.project.name), // Display the project name as the title
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
-          //mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
@@ -224,10 +242,7 @@ class _ProjectPageState extends State<ProjectPage> {
                       Expanded(
                         child: SingleChildScrollView(
                           child: Container(
-                            child: Text('${widget.project.description}',
-                              // maxLines: 3, // Adjust the number of lines to display
-                              // overflow: TextOverflow.ellipsis, // Show ellipsis (...) for overflow
-                            ),
+                            child: Text('${widget.project.description}'),
                           ),
                         ),
                       ),
@@ -235,7 +250,6 @@ class _ProjectPageState extends State<ProjectPage> {
                   ),
                 )),
             // Add more project details here
-            // Add Task button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
