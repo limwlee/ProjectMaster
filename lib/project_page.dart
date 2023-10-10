@@ -12,11 +12,17 @@ class ProjectPage extends StatefulWidget {
 }
 
 class _ProjectPageState extends State<ProjectPage> {
-  final TextEditingController _taskNameController = TextEditingController();
 
   void _showAddTaskDialog(BuildContext context) {
     // Initialize a list to store subtask controllers
     List<TextEditingController> subtaskControllers = [];
+
+    // Create a text editing controller for the task name
+    TextEditingController taskNameController = TextEditingController();
+
+    // Initialize variables to store whether the task name and subtasks are empty or not
+    bool validateTaskName = false;
+    List<bool> validateSubtasks = [];
 
     showDialog(
       context: context,
@@ -27,6 +33,7 @@ class _ProjectPageState extends State<ProjectPage> {
             void _addSubtask() {
               setState(() {
                 subtaskControllers.add(TextEditingController());
+                validateSubtasks.add(false);
               });
             }
 
@@ -39,8 +46,11 @@ class _ProjectPageState extends State<ProjectPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
                       TextField(
-                        controller: _taskNameController,
-                        decoration: InputDecoration(labelText: 'Task Name'),
+                        controller: taskNameController,
+                        decoration: InputDecoration(
+                          labelText: 'Task Name',
+                          errorText: validateTaskName ? 'Task name cannot be empty' : null,
+                        ),
                       ),
                       SizedBox(height: 20),
                       Align(
@@ -65,6 +75,7 @@ class _ProjectPageState extends State<ProjectPage> {
                                   controller: subtaskControllers[i],
                                   decoration: InputDecoration(
                                     labelText: 'Subtask ${i + 1}',
+                                    errorText: validateSubtasks[i] ? 'Subtask cannot be empty' : null,
                                   ),
                                 ),
                               ),
@@ -73,12 +84,73 @@ class _ProjectPageState extends State<ProjectPage> {
                                 onPressed: () {
                                   setState(() {
                                     subtaskControllers.removeAt(i);
+                                    validateSubtasks.removeAt(i);
                                   });
                                 },
                               ),
                             ],
                           ),
                         ),
+                      ElevatedButton(
+                        onPressed: () {
+                          // Get the task name from the controller
+                          final String taskName = taskNameController.text;
+
+                          // Check if the task name is empty
+                          if (taskName.isEmpty) {
+                            setState(() {
+                              validateTaskName = true;
+                            });
+                          } else {
+                            setState(() {
+                              validateTaskName = false;
+                            });
+
+                            // Get the subtask names from the controllers
+                            final List<String> subtaskNames = subtaskControllers
+                                .map((controller) => controller.text)
+                                .toList();
+
+                            // Check if any subtask is empty
+                            bool subtaskValidationFailed = false;
+                            for (int i = 0; i < subtaskNames.length; i++) {
+                              if (subtaskNames[i].isEmpty) {
+                                setState(() {
+                                  validateSubtasks[i] = true;
+                                });
+                                subtaskValidationFailed = true;
+                              } else {
+                                setState(() {
+                                  validateSubtasks[i] = false;
+                                });
+                              }
+                            }
+
+                            if (!subtaskValidationFailed) {
+
+                              // Create a new task document in the Firestore collection for tasks
+                              final CollectionReference tasksCollection =
+                              FirebaseFirestore.instance.collection('tasks');
+                              tasksCollection.add({
+                                'project_id': widget.project.id,
+                                'task_name': taskName,
+                                'subtasks': subtaskNames,
+                                // Add any other task-related data as needed
+                              });
+
+                              // Clear the text controllers
+                              taskNameController.clear();
+                              for (var controller in subtaskControllers) {
+                                controller.clear();
+                              }
+
+                              // Close the dialog
+                              Navigator.pop(context);
+                            }
+                          }
+                        },
+                        child: Text('Save Task'),
+                      ),
                       ElevatedButton(
                         onPressed: _addSubtask,
                         child: Text('Add Subtask'),
@@ -87,48 +159,13 @@ class _ProjectPageState extends State<ProjectPage> {
                   ),
                 ),
               ),
-              actions: <Widget>[
-                ElevatedButton(
-                  onPressed: () {
-                    // Get the task name from the controller
-                    final String taskName = _taskNameController.text;
-
-                    // Get the subtask names from the controllers
-                    final List<String> subtaskNames = subtaskControllers
-                        .map((controller) => controller.text)
-                        .toList();
-
-                    // Check if the task name is not empty
-                    if (taskName.isNotEmpty) {
-                      // Create a new task document in the Firestore collection for tasks
-                      final CollectionReference tasksCollection =
-                      FirebaseFirestore.instance.collection('tasks');
-                      tasksCollection.add({
-                        'project_id': widget.project.id,
-                        'task_name': taskName,
-                        'subtasks': subtaskNames,
-                        // Add any other task-related data as needed
-                      });
-
-                      // Clear the text controllers
-                      _taskNameController.clear();
-                      for (var controller in subtaskControllers) {
-                        controller.clear();
-                      }
-
-                      // Close the dialog
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: Text('Save Task'),
-                ),
-              ],
             );
           },
         );
       },
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
