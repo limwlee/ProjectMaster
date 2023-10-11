@@ -13,6 +13,37 @@ class ProjectPage extends StatefulWidget {
 }
 
 class _ProjectPageState extends State<ProjectPage> {
+  Future<List<Map<String, dynamic>>> _fetchTasks() async {
+    final FirebaseAuth auth = FirebaseAuth.instance;
+    final User? user = auth.currentUser;
+
+    if (user == null) {
+      // Handle the case where the user is not authenticated
+      return [];
+    }
+
+    try {
+      final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+      // Get a reference to the tasks collection for the current project
+      final tasksCollection = firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('projects')
+          .doc(widget.project.id)
+          .collection('tasks');
+
+      // Fetch and return the tasks
+      final querySnapshot = await tasksCollection.get();
+      final tasks = querySnapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+
+      return tasks;
+    } catch (e) {
+      print('Error fetching tasks: $e');
+      return [];
+    }
+  }
+
   void _showAddTaskDialog(BuildContext context) async {
     // Check if the user is authenticated
     final FirebaseAuth auth = FirebaseAuth.instance;
@@ -193,35 +224,14 @@ class _ProjectPageState extends State<ProjectPage> {
       appBar: AppBar(
         title: Text(widget.project.name), // Display the project name as the title
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: double.infinity, // Match parent width
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.blue), // Border style
-                borderRadius: BorderRadius.circular(10.0), // Border radius
-                color: Colors.grey[300], // Background color
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(
-                  '${widget.project.name}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 25,
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(
-              height: 10,
-            ),
-            Container(
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
                 width: double.infinity, // Match parent width
-                height: 100, // Set a specific height for the container
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.blue), // Border style
                   borderRadius: BorderRadius.circular(10.0), // Border radius
@@ -229,37 +239,124 @@ class _ProjectPageState extends State<ProjectPage> {
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Project Description:',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(
-                        height: 5,
-                      ),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          child: Container(
-                            child: Text('${widget.project.description}'),
+                  child: Text(
+                    '${widget.project.name}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 25,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              Container(
+                  width: double.infinity, // Match parent width
+                  height: 100, // Set a specific height for the container
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.blue), // Border style
+                    borderRadius: BorderRadius.circular(10.0), // Border radius
+                    color: Colors.grey[300], // Background color
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Project Description:',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(
+                          height: 5,
+                        ),
+                        Expanded(
+                          child: SingleChildScrollView(
+                            child: Container(
+                              child: Text('${widget.project.description}'),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                )),
-            // Add more project details here
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  _showAddTaskDialog(context);
-                },
-                child: Text('Add Task'),
+                      ],
+                    ),
+                  )),
+              SizedBox(
+                height: 10,
               ),
-            ),
-          ],
+              Text("Tasks:",style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),),
+              SizedBox(
+                height: 10,
+              ),
+              //Container to display tasks
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.blue),
+                  borderRadius: BorderRadius.circular(10.0),
+                  color: Colors.grey[300],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    FutureBuilder<List<Map<String, dynamic>>>(
+                      future: _fetchTasks(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        } else if (!snapshot.hasData || snapshot.data == null || snapshot.data!.isEmpty) {
+                          return const Center(
+                            child: Text('No tasks found.'),
+                          );
+                        }
+
+                        final tasks = snapshot.data;
+
+                        return ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: tasks?.length ?? 0,
+                          itemBuilder: (context, index) {
+                            if (tasks == null) {
+                              // Return an empty widget or handle the case when tasks is null
+                              return SizedBox.shrink();
+                            }
+
+                            final taskName = tasks[index]['name'] as String;
+                            final subtasks = (tasks![index]['subtasks'] as List<dynamic>).map((subtask) => subtask.toString()).toList();
+
+                            return ListTile(
+                              title: Text(taskName),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: subtasks
+                                    .map((subtask) => Text('- $subtask'))
+                                    .toList(),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    _showAddTaskDialog(context);
+                  },
+                  child: Text('Add Task'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
