@@ -13,6 +13,8 @@ class ProjectPage extends StatefulWidget {
 }
 
 class _ProjectPageState extends State<ProjectPage> {
+  // Define a variable to keep track of which task is expanded
+  Set<int> expandedTaskIndices = {};
 
   void _showAddTaskDialog(BuildContext context) async {
     // Check if the user is authenticated
@@ -59,7 +61,9 @@ class _ProjectPageState extends State<ProjectPage> {
                         controller: taskNameController,
                         decoration: InputDecoration(
                           labelText: 'Task Name',
-                          errorText: validateTaskName ? 'Task name cannot be empty' : null,
+                          errorText: validateTaskName
+                              ? 'Task name cannot be empty'
+                              : null,
                         ),
                       ),
                       SizedBox(height: 20),
@@ -85,7 +89,9 @@ class _ProjectPageState extends State<ProjectPage> {
                                   controller: subtaskControllers[i],
                                   decoration: InputDecoration(
                                     labelText: 'Subtask ${i + 1}',
-                                    errorText: validateSubtasks[i] ? 'Subtask cannot be empty' : null,
+                                    errorText: validateSubtasks[i]
+                                        ? 'Subtask cannot be empty'
+                                        : null,
                                   ),
                                 ),
                               ),
@@ -139,16 +145,18 @@ class _ProjectPageState extends State<ProjectPage> {
                             if (!subtaskValidationFailed) {
                               try {
                                 // Get a reference to the Firestore instance
-                                final FirebaseFirestore firestore = FirebaseFirestore.instance;
+                                final FirebaseFirestore firestore =
+                                    FirebaseFirestore.instance;
 
                                 // Create a new task document
-                                final DocumentReference taskRef = await firestore
-                                    .collection('users')
-                                    .doc(user.uid) // User's UID
-                                    .collection('projects')
-                                    .doc(widget.project.id) // Project ID
-                                    .collection('tasks')
-                                    .add({
+                                final DocumentReference taskRef =
+                                    await firestore
+                                        .collection('users')
+                                        .doc(user.uid) // User's UID
+                                        .collection('projects')
+                                        .doc(widget.project.id) // Project ID
+                                        .collection('tasks')
+                                        .add({
                                   'name': taskName,
                                   'subtasks': subtaskNames,
                                 });
@@ -195,11 +203,14 @@ class _ProjectPageState extends State<ProjectPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.project.name), // Display the project name as the title
+        title:
+            Text(widget.project.name), // Display the project name as the title
       ),
       body: SingleChildScrollView(
+
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 70.0), // Add 80.0 padding at the bottom
+          padding: const EdgeInsets.fromLTRB(
+              8.0, 8.0, 8.0, 70.0), // Add 80.0 padding at the bottom
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -257,15 +268,21 @@ class _ProjectPageState extends State<ProjectPage> {
               SizedBox(
                 height: 10,
               ),
-              Text("Tasks:",style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),),
+              Text(
+                "Tasks:",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
+              ),
               SizedBox(
                 height: 10,
               ),
               //Container to display tasks
               // Display tasks and subtasks
+              // Display tasks and subtasks using an expandable list
+              // ...
+
               StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('users')
@@ -284,7 +301,8 @@ class _ProjectPageState extends State<ProjectPage> {
 
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: tasks.map((taskDoc) {
+                    children: List.generate(tasks.length, (index) {
+                      final taskDoc = tasks[index];
                       final taskData = taskDoc.data() as Map<String, dynamic>;
                       final taskName = taskData['name'];
                       final subtasks = taskData['subtasks'] as List<dynamic>;
@@ -297,19 +315,49 @@ class _ProjectPageState extends State<ProjectPage> {
                           borderRadius: BorderRadius.circular(10.0),
                           color: Colors.grey[300],
                         ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Task: $taskName'),
-                              for (var subtask in subtasks)
-                                Text('- $subtask'),
-                            ],
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ListTile(
+                              title: Text(
+                                'Task: $taskName',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              trailing: subtasks.isNotEmpty
+                                  ? Icon(
+                                expandedTaskIndices.contains(index)
+                                    ? Icons.keyboard_arrow_up
+                                    : Icons.keyboard_arrow_down,
+                              )
+                                  : null, // If no subtasks, set trailing to null
+                              onTap: () {
+                                setState(() {
+                                  if (expandedTaskIndices.contains(index)) {
+                                    expandedTaskIndices.remove(index);
+                                  } else {
+                                    expandedTaskIndices.add(index);
+                                  }
+                                });
+                              },
+                            ),
+
+                            if (expandedTaskIndices.contains(index))
+                              Column(
+                                children: subtasks.map((subtask) => Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Row(
+                                    children: [
+                                      SizedBox(width: 16.0),
+                                      Text('- '),
+                                      Text(subtask),
+                                    ],
+                                  ),
+                                )).toList(),
+                              ),
+                          ],
                         ),
                       );
-                    }).toList(),
+                    }),
                   );
                 },
               ),
@@ -317,7 +365,6 @@ class _ProjectPageState extends State<ProjectPage> {
           ),
         ),
       ),
-
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: Container(
         padding: EdgeInsets.all(16),
