@@ -13,36 +13,6 @@ class ProjectPage extends StatefulWidget {
 }
 
 class _ProjectPageState extends State<ProjectPage> {
-  Future<List<Map<String, dynamic>>> _fetchTasks() async {
-    final FirebaseAuth auth = FirebaseAuth.instance;
-    final User? user = auth.currentUser;
-
-    if (user == null) {
-      // Handle the case where the user is not authenticated
-      return [];
-    }
-
-    try {
-      final FirebaseFirestore firestore = FirebaseFirestore.instance;
-
-      // Get a reference to the tasks collection for the current project
-      final tasksCollection = firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('projects')
-          .doc(widget.project.id)
-          .collection('tasks');
-
-      // Fetch and return the tasks
-      final querySnapshot = await tasksCollection.get();
-      final tasks = querySnapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
-
-      return tasks;
-    } catch (e) {
-      print('Error fetching tasks: $e');
-      return [];
-    }
-  }
 
   void _showAddTaskDialog(BuildContext context) async {
     // Check if the user is authenticated
@@ -192,6 +162,9 @@ class _ProjectPageState extends State<ProjectPage> {
                                   controller.clear();
                                 }
 
+                                // Auto-refresh the task list by calling setState
+                                setState(() {});
+
                                 // Close the dialog
                                 Navigator.pop(context);
                               } catch (e) {
@@ -226,7 +199,7 @@ class _ProjectPageState extends State<ProjectPage> {
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 70.0), // Add 80.0 padding at the bottom
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -292,71 +265,72 @@ class _ProjectPageState extends State<ProjectPage> {
                 height: 10,
               ),
               //Container to display tasks
-              Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.blue),
-                  borderRadius: BorderRadius.circular(10.0),
-                  color: Colors.grey[300],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    FutureBuilder<List<Map<String, dynamic>>>(
-                      future: _fetchTasks(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        } else if (!snapshot.hasData || snapshot.data == null || snapshot.data!.isEmpty) {
-                          return const Center(
-                            child: Text('No tasks found.'),
-                          );
-                        }
+              // Display tasks and subtasks
+              StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(FirebaseAuth.instance.currentUser!.uid)
+                    .collection('projects')
+                    .doc(widget.project.id)
+                    .collection('tasks')
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return CircularProgressIndicator();
+                  } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return Text('No tasks found for this project.');
+                  }
+                  final tasks = snapshot.data!.docs;
 
-                        final tasks = snapshot.data;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: tasks.map((taskDoc) {
+                      final taskData = taskDoc.data() as Map<String, dynamic>;
+                      final taskName = taskData['name'];
+                      final subtasks = taskData['subtasks'] as List<dynamic>;
 
-                        return ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: tasks?.length ?? 0,
-                          itemBuilder: (context, index) {
-                            if (tasks == null) {
-                              // Return an empty widget or handle the case when tasks is null
-                              return SizedBox.shrink();
-                            }
-
-                            final taskName = tasks[index]['name'] as String;
-                            final subtasks = (tasks![index]['subtasks'] as List<dynamic>).map((subtask) => subtask.toString()).toList();
-
-                            return ListTile(
-                              title: Text(taskName),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: subtasks
-                                    .map((subtask) => Text('- $subtask'))
-                                    .toList(),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    _showAddTaskDialog(context);
-                  },
-                  child: Text('Add Task'),
-                ),
+                      return Container(
+                        margin: EdgeInsets.only(bottom: 10.0),
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.blue),
+                          borderRadius: BorderRadius.circular(10.0),
+                          color: Colors.grey[300],
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Task: $taskName'),
+                              for (var subtask in subtasks)
+                                Text('- $subtask'),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  );
+                },
               ),
             ],
           ),
+        ),
+      ),
+
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: Container(
+        padding: EdgeInsets.all(16),
+        width: double.infinity,
+        child: FloatingActionButton.extended(
+          onPressed: () {
+            _showAddTaskDialog(context);
+          },
+          label: Text('Add Task'),
+          icon: Icon(Icons.add),
+          // shape: RoundedRectangleBorder(
+          //   borderRadius: BorderRadius.all(Radius.circular(10.0)), // Adjust the radius to make it rectangular
+          // ),
         ),
       ),
     );

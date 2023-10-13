@@ -16,6 +16,7 @@ class _HomePageState extends State<HomePage> {
   final TextEditingController _projectDescriptionController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  String _searchQuery = ''; // Initialize an empty search query
 
   @override
   Widget build(BuildContext context) {
@@ -23,122 +24,155 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: const Text('Home Page'),
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: _firestore
-            .collection('users')
-            .doc(_auth.currentUser!.uid)
-            .collection('projects')
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(
-              child: Text('No projects found.'),
-            );
-          }
-          final projects = snapshot.data!.docs;
-
-          // Display the list of projects
-          return ListView.builder(
-            itemCount: projects.length,
-            itemBuilder: (context, index) {
-              final project = projects[index].data() as Map<String, dynamic>;
-              final projectName = project['name'];
-              final projectDescription = project['description'];
-              final projectId = projects[index].id;
-
-              void deleteProject() async {
-                await _firestore
-                    .collection('users')
-                    .doc(_auth.currentUser!.uid)
-                    .collection('projects')
-                    .doc(projects[index].id)
-                    .delete();
-              }
-
-              return Dismissible(
-                key: UniqueKey(),
-                onDismissed: (direction) {
-                  if (direction == DismissDirection.endToStart) {
-                    // Show a confirmation dialog before deleting
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: Text('Confirm Delete'),
-                        content: Text('Are you sure you want to delete this project?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              // Cancel the delete action and close the dialog
-                              Navigator.of(context).pop();
-                              setState(() {});
-                            },
-                            child: Text('Cancel'),
-
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              // Delete the project and close the dialog
-                              deleteProject();
-                              Navigator.of(context).pop();
-                            },
-                            child: Text('Delete'),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                },
-                background: Container(
-                  color: Colors.red,
-                  alignment: Alignment.centerRight,
-                  padding: EdgeInsets.only(right: 20),
-                  child: Icon(
-                    Icons.delete,
-                    color: Colors.white,
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    decoration: InputDecoration(
+                      labelText: 'Search Projects',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value;
+                      });
+                    },
                   ),
                 ),
-                child: GestureDetector(
-                  onTap: () {
-                    // Navigate to the ProjectPage with project details
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => ProjectPage(
-                          project: Project(
-                            id: projectId,
-                            name: projectName,
-                            description: projectDescription ,
+              ],
+            ),
+          ),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: _firestore
+                  .collection('users')
+                  .doc(_auth.currentUser!.uid)
+                  .collection('projects')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(
+                    child: Text('No projects found.'),
+                  );
+                }
+                final projects = snapshot.data!.docs;
+
+                // Filter projects based on the search query
+                final filteredProjects = projects.where((project) {
+                  final projectData = project.data() as Map<String, dynamic>;
+                  final projectName = projectData['name'] as String;
+                  final projectDescription = projectData['description'] as String;
+
+                  return projectName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                      projectDescription.toLowerCase().contains(_searchQuery.toLowerCase());
+                }).toList();
+
+                // Display the list of projects
+                return ListView.builder(
+                  itemCount: filteredProjects.length,
+                  itemBuilder: (context, index) {
+                    final project = filteredProjects[index].data() as Map<String, dynamic>;
+                    final projectName = project['name'];
+                    final projectDescription = project['description'];
+                    final projectId = filteredProjects[index].id;
+
+                    void deleteProject() async {
+                      await _firestore
+                          .collection('users')
+                          .doc(_auth.currentUser!.uid)
+                          .collection('projects')
+                          .doc(filteredProjects[index].id)
+                          .delete();
+                    }
+
+                    return Dismissible(
+                      key: UniqueKey(),
+                      onDismissed: (direction) {
+                        if (direction == DismissDirection.endToStart) {
+                          // Show a confirmation dialog before deleting
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: Text('Confirm Delete'),
+                              content: Text('Are you sure you want to delete this project?'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    // Cancel the delete action and close the dialog
+                                    Navigator.of(context).pop();
+                                    setState(() {});
+                                  },
+                                  child: Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    // Delete the project and close the dialog
+                                    deleteProject();
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: Text('Delete'),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                      },
+                      background: Container(
+                        color: Colors.red,
+                        alignment: Alignment.centerRight,
+                        padding: EdgeInsets.only(right: 20),
+                        child: Icon(
+                          Icons.delete,
+                          color: Colors.white,
+                        ),
+                      ),
+                      child: GestureDetector(
+                        onTap: () {
+                          // Navigate to the ProjectPage with project details
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => ProjectPage(
+                                project: Project(
+                                  id: projectId,
+                                  name: projectName,
+                                  description: projectDescription,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: InkWell(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: Colors.blue),
+                                borderRadius: BorderRadius.circular(10.0),
+                              ),
+                              child: ListTile(
+                                title: Text(projectName),
+                                subtitle: Text(projectDescription),
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     );
                   },
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: InkWell(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                              color: Colors.blue), // Customize border properties
-                          borderRadius: BorderRadius.circular(10.0), // Customize border radius
-                          // Add more BoxDecoration properties as needed
-                        ),
-                        child: ListTile(
-                          title: Text(projectName),
-                          subtitle: Text(projectDescription),
-                          // Add more widgets for project details or actions
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          );
-        },
+                );
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
