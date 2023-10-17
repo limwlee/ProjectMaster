@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:project_master/project.dart';
 
 class ProjectPage extends StatefulWidget {
@@ -15,6 +16,37 @@ class ProjectPage extends StatefulWidget {
 class _ProjectPageState extends State<ProjectPage> {
   // Define a variable to keep track of which task is expanded
   Set<int> expandedTaskIndices = {};
+  ScrollController _scrollController = ScrollController();
+  DateTime? _projectDeadline; // Add this property to store the project's deadline
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch the project's deadline from Firestore
+    _fetchProjectDeadline();
+  }
+
+  void _fetchProjectDeadline() async {
+    final userUid = FirebaseAuth.instance.currentUser!.uid;
+    final projectDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userUid)
+        .collection('projects')
+        .doc(widget.project.id)
+        .get();
+
+    if (projectDoc.exists) {
+      final projectData = projectDoc.data() as Map<String, dynamic>;
+      final projectDeadlineTimestamp = projectData['deadline'] as Timestamp?;
+
+      if (projectDeadlineTimestamp != null) {
+        _projectDeadline = projectDeadlineTimestamp.toDate();
+        setState(() {});
+      }
+    }
+  }
+
+
 
   void _showAddTaskDialog(BuildContext context) async {
     // Check if the user is authenticated
@@ -26,13 +58,10 @@ class _ProjectPageState extends State<ProjectPage> {
       return;
     }
 
-    // Initialize a list to store subtask controllers
-    List<TextEditingController> subtaskControllers = [];
+    List<TextEditingController> subtaskControllers = [];// Initialize a list to store subtask controllers
+    TextEditingController taskNameController = TextEditingController(); // Create a text editing controller for the task name
 
-    // Create a text editing controller for the task name
-    TextEditingController taskNameController = TextEditingController();
-
-    // Initialize variables to store whether the task name and subtasks are empty or not
+    // Initialize variables to store whether the task name,subtasks are empty or not
     bool validateTaskName = false;
     List<bool> validateSubtasks = [];
 
@@ -108,6 +137,10 @@ class _ProjectPageState extends State<ProjectPage> {
                           ),
                         ),
                       ElevatedButton(
+                        onPressed: _addSubtask,
+                        child: Text('Add Subtask'),
+                      ),
+                      ElevatedButton(
                         onPressed: () async {
                           // Get the task name from the controller
                           final String taskName = taskNameController.text;
@@ -145,8 +178,7 @@ class _ProjectPageState extends State<ProjectPage> {
                             if (!subtaskValidationFailed) {
                               try {
                                 // Get a reference to the Firestore instance
-                                final FirebaseFirestore firestore =
-                                    FirebaseFirestore.instance;
+                                final FirebaseFirestore firestore =  FirebaseFirestore.instance;
 
                                 // Create a new task document
                                 final DocumentReference taskRef =
@@ -157,9 +189,9 @@ class _ProjectPageState extends State<ProjectPage> {
                                         .doc(widget.project.id) // Project ID
                                         .collection('tasks')
                                         .add({
-                                  'name': taskName,
-                                  'subtasks': subtaskNames,
-                                });
+                                      'name': taskName,
+                                      'subtasks': subtaskNames,
+                                    });
 
                                 // You can now use the taskRef if needed
                                 print('Task added with ID: ${taskRef.id}');
@@ -184,10 +216,6 @@ class _ProjectPageState extends State<ProjectPage> {
                         },
                         child: Text('Save Task'),
                       ),
-                      ElevatedButton(
-                        onPressed: _addSubtask,
-                        child: Text('Add Subtask'),
-                      ),
                     ],
                   ),
                 ),
@@ -207,7 +235,7 @@ class _ProjectPageState extends State<ProjectPage> {
             Text(widget.project.name), // Display the project name as the title
       ),
       body: SingleChildScrollView(
-
+        controller: _scrollController,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
               8.0, 8.0, 8.0, 70.0), // Add 80.0 padding at the bottom
@@ -268,6 +296,36 @@ class _ProjectPageState extends State<ProjectPage> {
               SizedBox(
                 height: 10,
               ),
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.blue),
+                  borderRadius: BorderRadius.circular(10.0),
+                  color: Colors.grey[300],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Project Deadline:',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(height: 5),
+                      Text(
+                        _projectDeadline != null
+                            ? DateFormat('yyyy-MM-dd HH:mm').format(_projectDeadline!)
+                            : 'N/A', // Provide a default value or message if the deadline is null
+                      )
+
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: 10,
+              ),
               Text(
                 "Tasks:",
                 style: TextStyle(
@@ -278,11 +336,7 @@ class _ProjectPageState extends State<ProjectPage> {
               SizedBox(
                 height: 10,
               ),
-              //Container to display tasks
-              // Display tasks and subtasks
-              // Display tasks and subtasks using an expandable list
-              // ...
-
+              //Display tasks
               StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('users')
@@ -330,7 +384,7 @@ class _ProjectPageState extends State<ProjectPage> {
                                     : Icons.keyboard_arrow_down,
                               )
                                   : null, // If no subtasks, set trailing to null
-                              onTap: () {
+                              onTap: (){
                                 setState(() {
                                   if (expandedTaskIndices.contains(index)) {
                                     expandedTaskIndices.remove(index);
@@ -338,6 +392,17 @@ class _ProjectPageState extends State<ProjectPage> {
                                     expandedTaskIndices.add(index);
                                   }
                                 });
+
+                                // Calculate the position to scroll to based on the item's index
+                                final itemHeight = 100.0; // Change this to match your item height
+                                final itemPosition = index * itemHeight;
+
+                                // Scroll to the tapped item without jumping to the top
+                                _scrollController.animateTo(
+                                  itemPosition,
+                                  duration: Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut,
+                                );
                               },
                             ),
 

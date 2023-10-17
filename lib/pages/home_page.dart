@@ -17,6 +17,8 @@ class _HomePageState extends State<HomePage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String _searchQuery = ''; // Initialize an empty search query
+  DateTime _selectedDeadline = DateTime.now(); // Initialize with the current date and time
+
 
   @override
   Widget build(BuildContext context) {
@@ -144,6 +146,8 @@ class _HomePageState extends State<HomePage> {
                                   id: projectId,
                                   name: projectName,
                                   description: projectDescription,
+                                  deadline: _selectedDeadline,
+
                                 ),
                               ),
                             ),
@@ -187,25 +191,66 @@ class _HomePageState extends State<HomePage> {
   //-------------------add project dialog---------------------------
 
   Future<void> _showAddProjectDialog(BuildContext context) async {
+    //DateTime selectedDeadline = DateTime.now(); // Initialize with the current date and time
+
     return showDialog<void>(
       context: context,
-      barrierDismissible:
-      false, // Dialog cannot be dismissed by tapping outside
+      barrierDismissible: false, // Dialog cannot be dismissed by tapping outside
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Add Project'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _projectNameController,
-                decoration: InputDecoration(labelText: 'Project Name'),
-              ),
-              TextField(
-                controller: _projectDescriptionController,
-                decoration: InputDecoration(labelText: 'Project Description'),
-              ),
-            ],
+          content: StatefulBuilder(
+            builder: (context,setState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: _projectNameController,
+                    decoration: InputDecoration(labelText: 'Project Name'),
+                  ),
+                  TextField(
+                    controller: _projectDescriptionController,
+                    decoration: InputDecoration(labelText: 'Project Description'),
+                  ),
+                  Row(
+                    children: [
+                      Text('Select Deadline:'),
+                      TextButton(
+                        onPressed: () async {
+                          final selectedDate = await showDatePicker(
+                            context: context,
+                            initialDate: _selectedDeadline,
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime(2101),
+                          );
+
+                          if (selectedDate != null) {
+                            final selectedTime = await showTimePicker(
+                              context: context,
+                              initialTime: TimeOfDay.fromDateTime(_selectedDeadline),
+                            );
+
+                            if (selectedTime != null) {
+                              setState(() {
+                                _selectedDeadline = DateTime(
+                                  selectedDate.year,
+                                  selectedDate.month,
+                                  selectedDate.day,
+                                  selectedTime.hour,
+                                  selectedTime.minute,
+                                );
+                              });
+                            }
+                          }
+                        },
+                        child: Text('Choose Deadline'),
+                      ),
+                    ],
+                  ),
+                  Text('Selected Deadline: ${_selectedDeadline.toString()}'),
+                ],
+              );
+            }
           ),
           actions: <Widget>[
             TextButton(
@@ -244,6 +289,7 @@ class _HomePageState extends State<HomePage> {
                   'id': projectId,
                   'name': projectName,
                   'description': projectDescription,
+                  'deadline': _selectedDeadline, // Add the selected deadline
                 };
 
                 try {
@@ -258,6 +304,9 @@ class _HomePageState extends State<HomePage> {
                   // Clear the text controllers
                   _projectNameController.clear();
                   _projectDescriptionController.clear();
+                  setState(() {
+                    _selectedDeadline = DateTime.now();
+                  });
 
                   // Close the dialog
                   Navigator.of(context).pop();

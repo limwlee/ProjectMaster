@@ -2,14 +2,14 @@ class Project {
   final String id;
   final String name;
   final String description;
-  final DateTime? dueDate;
+  final DateTime deadline;
   bool isSelected;
 
   Project({
     required this.id,
     required this.name,
     required this.description,
-    this.dueDate,
+    required this.deadline,
     this.isSelected = false,
   });
 }
