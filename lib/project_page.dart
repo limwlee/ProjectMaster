@@ -408,6 +408,8 @@ class _ProjectPageState extends State<ProjectPage> {
                       final taskData = taskDoc.data() as Map<String, dynamic>;
                       final taskName = taskData['name'];
                       final subtasks = taskData['subtasks'] as List<dynamic>;
+                      final isComplete = taskData['isComplete'] ?? false; // Default to false if not set in Firestore
+
 
                       return Container(
                         margin: EdgeInsets.only(bottom: 10.0),
@@ -421,9 +423,27 @@ class _ProjectPageState extends State<ProjectPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             ListTile(
-                              title: Text(
-                                'Task: $taskName',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                              title: Row(
+                                children: [
+                                  Checkbox(
+                                    value: isComplete,
+                                    onChanged: (bool? newValue) {
+                                      // When the checkbox is changed, update the 'isComplete' property in Firestore
+                                      FirebaseFirestore.instance
+                                          .collection('users')
+                                          .doc(FirebaseAuth.instance.currentUser!.uid)
+                                          .collection('projects')
+                                          .doc(widget.project.id)
+                                          .collection('tasks')
+                                          .doc(taskDoc.id) // Get the specific task document
+                                          .update({'isComplete': newValue});
+                                    },
+                                  ),
+                                  Text(
+                                    'Task: $taskName',
+                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                ],
                               ),
                               trailing: subtasks.isNotEmpty
                                   ? Icon(

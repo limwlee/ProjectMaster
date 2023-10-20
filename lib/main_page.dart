@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:project_master/pages/favorites_page.dart';
+import 'package:project_master/pages/progress_page.dart';
 import 'package:project_master/pages/home_page.dart';
 import 'package:project_master/pages/tasks_page.dart';
 import 'package:project_master/pages/setting_page.dart';
@@ -15,7 +15,7 @@ class _MainPageState extends State<MainPage> {
   final List<Widget> _pages = [
     HomePage(),
     TasksPage(),
-    FavoritesPage(),
+    ProgressPage(),
     SettingPage(),
   ];
 
@@ -50,7 +50,7 @@ class _MainPageState extends State<MainPage> {
         unselectedItemColor: Colors.black,
         items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
+            icon: Icon(Icons.home_max_outlined),
             label: 'Main',
           ),
           BottomNavigationBarItem(
@@ -58,11 +58,11 @@ class _MainPageState extends State<MainPage> {
             label: 'Tasks',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
-            label: 'Favorites',
+            icon: Icon(Icons.align_horizontal_left),
+            label: 'Progress',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
+            icon: Icon(Icons.settings_applications_outlined),
             label: 'Settings',
           ),
         ],
