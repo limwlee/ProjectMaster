@@ -146,7 +146,7 @@ class _HomePageState extends State<HomePage> {
                                   id: projectId,
                                   name: projectName,
                                   description: projectDescription,
-                                  deadline: _selectedDeadline,
+                                  deadline: _selectedDeadline, tasks: [],
 
                                 ),
                               ),

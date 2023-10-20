@@ -18,6 +18,7 @@ class _ProjectPageState extends State<ProjectPage> {
   Set<int> expandedTaskIndices = {};
   ScrollController _scrollController = ScrollController();
   DateTime? _projectDeadline; // Add this property to store the project's deadline
+  DateTime? selectedTaskDeadline;
 
   @override
   void initState() {
@@ -45,8 +46,6 @@ class _ProjectPageState extends State<ProjectPage> {
       }
     }
   }
-
-
 
   void _showAddTaskDialog(BuildContext context) async {
     // Check if the user is authenticated
@@ -78,11 +77,39 @@ class _ProjectPageState extends State<ProjectPage> {
               });
             }
 
+            void _pickTaskDeadline(BuildContext context) async {
+              final selectedDate = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now(),
+                firstDate: DateTime.now(),
+                lastDate: DateTime(2101),
+              );
+
+              if (selectedDate != null) {
+                final selectedTime = await showTimePicker(
+                  context: context,
+                  initialTime: TimeOfDay.fromDateTime(selectedDate),
+                );
+
+                if (selectedTime != null) {
+                  setState(() {
+                    selectedTaskDeadline = DateTime(
+                      selectedDate.year,
+                      selectedDate.month,
+                      selectedDate.day,
+                      selectedTime.hour,
+                      selectedTime.minute,
+                    );
+                  });
+                }
+              }
+            }
+
             return AlertDialog(
               title: Text('Add Task'),
               content: SingleChildScrollView(
                 child: Container(
-                  padding: EdgeInsets.all(16),
+                  padding: EdgeInsets.all(5),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
@@ -140,6 +167,23 @@ class _ProjectPageState extends State<ProjectPage> {
                         onPressed: _addSubtask,
                         child: Text('Add Subtask'),
                       ),
+                      Text(
+                        'Task Deadline: ${selectedTaskDeadline != null ? DateFormat('yyyy-MM-dd HH:mm').format(selectedTaskDeadline!) : 'Not set'}',
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            selectedTaskDeadline = null;
+                          });
+                        },
+                        child: Text('Cancel Deadline'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          _pickTaskDeadline(context);
+                        },
+                        child: Text('Task Deadline'),
+                      ),
                       ElevatedButton(
                         onPressed: () async {
                           // Get the task name from the controller
@@ -182,16 +226,17 @@ class _ProjectPageState extends State<ProjectPage> {
 
                                 // Create a new task document
                                 final DocumentReference taskRef =
-                                    await firestore
-                                        .collection('users')
-                                        .doc(user.uid) // User's UID
-                                        .collection('projects')
-                                        .doc(widget.project.id) // Project ID
-                                        .collection('tasks')
-                                        .add({
-                                      'name': taskName,
-                                      'subtasks': subtaskNames,
-                                    });
+                                await firestore
+                                    .collection('users')
+                                    .doc(user.uid) // User's UID
+                                    .collection('projects')
+                                    .doc(widget.project.id) // Project ID
+                                    .collection('tasks')
+                                    .add({
+                                  'name': taskName,
+                                  'subtasks': subtaskNames,
+                                  'tasksdeadline': selectedTaskDeadline, // Store the selected task deadline
+                                });
 
                                 // You can now use the taskRef if needed
                                 print('Task added with ID: ${taskRef.id}');
@@ -201,6 +246,9 @@ class _ProjectPageState extends State<ProjectPage> {
                                 for (var controller in subtaskControllers) {
                                   controller.clear();
                                 }
+                                setState(() {
+                                  selectedTaskDeadline = null;
+                                });
 
                                 // Auto-refresh the task list by calling setState
                                 setState(() {});
@@ -232,7 +280,7 @@ class _ProjectPageState extends State<ProjectPage> {
     return Scaffold(
       appBar: AppBar(
         title:
-            Text(widget.project.name), // Display the project name as the title
+        Text(widget.project.name), // Display the project name as the title
       ),
       body: SingleChildScrollView(
         controller: _scrollController,

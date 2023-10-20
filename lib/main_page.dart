@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:project_master/pages/favorites_page.dart';
 import 'package:project_master/pages/home_page.dart';
-import 'package:project_master/pages/search_page.dart';
+import 'package:project_master/pages/tasks_page.dart';
 import 'package:project_master/pages/setting_page.dart';
 
 class MainPage extends StatefulWidget {
@@ -14,7 +14,7 @@ class _MainPageState extends State<MainPage> {
   final PageController _pageController = PageController();
   final List<Widget> _pages = [
     HomePage(),
-    SearchPage(),
+    TasksPage(),
     FavoritesPage(),
     SettingPage(),
   ];
@@ -54,8 +54,8 @@ class _MainPageState extends State<MainPage> {
             label: 'Main',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Search',
+            icon: Icon(Icons.article_outlined),
+            label: 'Tasks',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.favorite),
