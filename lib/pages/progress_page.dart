@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:syncfusion_flutter_charts/charts.dart';
 
 class ProgressPage extends StatefulWidget {
   const ProgressPage({Key? key}) : super(key: key);
@@ -46,7 +47,7 @@ class _ProgressPageState extends State<ProgressPage> {
                       final totalTasks = taskCount['total'];
                       final completedTasks = taskCount['completed'];
                       final incompleteTasks = taskCount['incomplete'];
-                      final completionPercentage = totalTasks == 0 ? 0.0 : (completedTasks / totalTasks * 100).toStringAsFixed(2);
+                      final completionPercentage = totalTasks == 0 ? 0.0 : (completedTasks / totalTasks * 100).toDouble();
 
                       return Container(
                         margin: EdgeInsets.all(10),
@@ -62,7 +63,27 @@ class _ProgressPageState extends State<ProgressPage> {
                             Text('Total Tasks: $totalTasks'),
                             Text('Completed Tasks: $completedTasks'),
                             Text('Incomplete Tasks: $incompleteTasks'),
-                            Text('Completion Percentage: $completionPercentage% completed'),
+                            Text('Completion Percentage: ${completionPercentage.toStringAsFixed(2)}% completed'),
+                            SizedBox(height: 10),
+                            SfCircularChart(
+                              series: <DoughnutSeries<_ChartData, String>>[
+                                DoughnutSeries<_ChartData, String>(
+                                  dataSource: <_ChartData>[
+                                    _ChartData('Completed', completedTasks),
+                                    _ChartData('Incomplete', incompleteTasks),
+                                  ],
+                                  xValueMapper: (_ChartData data, _) => data.x,
+                                  yValueMapper: (_ChartData data, _) => data.y,
+                                  dataLabelMapper: (_ChartData data, _) =>
+                                  '${(data.y / totalTasks * 100).toStringAsFixed(2)}%',
+                                  dataLabelSettings: DataLabelSettings(
+                                    isVisible: true, // Set to true to show labels
+                                    labelPosition: ChartDataLabelPosition.inside, // Adjust the position
+                                  ),
+                                ),
+                              ],
+                            )
+
                           ],
                         ),
                       );
@@ -89,4 +110,10 @@ class _ProgressPageState extends State<ProgressPage> {
       'incomplete': incompleteTasks,
     };
   }
+}
+
+class _ChartData {
+  _ChartData(this.x, this.y);
+  final String x;
+  final int y;
 }

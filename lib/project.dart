@@ -1,11 +1,11 @@
 import 'package:firebase_storage/firebase_storage.dart';
 
 class Project {
-  final String id;
-  final String name;
-  final String description;
-  final DateTime deadline;
-  final List<Task> tasks; // Add a list of tasks
+  String id;
+  String name;
+  String description;
+  DateTime deadline;
+  List<Task> tasks; // Add a list of tasks
   //bool isSelected;
 
   Project({
