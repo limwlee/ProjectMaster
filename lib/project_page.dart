@@ -109,6 +109,32 @@ class _ProjectPageState extends State<ProjectPage> {
                       selectedTime.hour,
                       selectedTime.minute,
                     );
+
+                    // Check if the selected task deadline is after the project deadline
+                    if (_projectDeadline != null && selectedTaskDeadline!.isAfter(_projectDeadline!)) {
+                      // Show an error message to the user
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: Text('Warning',style: TextStyle(color: Colors.red),),
+                            content: Text('Your task deadline is after the project deadline.'),
+                            actions: <Widget>[
+                              TextButton(
+                                child: Text('OK'),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    } else {
+                      setState(() {
+                        selectedTaskDeadline = selectedTaskDeadline;
+                      });
+                    }
                   });
                 }
               }
