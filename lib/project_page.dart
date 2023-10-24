@@ -21,6 +21,7 @@ class _ProjectPageState extends State<ProjectPage> {
   DateTime? _projectDeadline; // Add this property to store the project's deadline
   DateTime? selectedTaskDeadline;
   late TextEditingController projectDeadlineController;
+  DateTime? taskDeadline;
 
   @override
   void initState() {
@@ -368,19 +369,11 @@ class _ProjectPageState extends State<ProjectPage> {
     );
   }
 
-  void _editTask(BuildContext context, String initialTaskName, List<String> initialSubtasks, String taskId) {
-    List<TextEditingController> subtaskControllers = [];
-
-    // Initialize subtask controllers with the initial subtask values
-    for (int i = 0; i < initialSubtasks.length; i++) {
-      subtaskControllers.add(TextEditingController(text: initialSubtasks[i]));
-    }
-
-    TextEditingController taskNameController = TextEditingController(text: initialTaskName);
-
-    // Initialize variables to store whether the task name, subtasks are empty or not
-    bool validateTaskName = false;
-    List<bool> validateSubtasks = List.generate(initialSubtasks.length, (index) => false);
+  void _editTask(BuildContext context, String taskName, List<String> subtasks, String taskId, DateTime? taskDeadline,) {
+    TextEditingController taskNameController = TextEditingController(text: taskName);
+    List<TextEditingController> subtaskControllers =
+    subtasks.map((subtask) => TextEditingController(text: subtask)).toList();
+    DateTime? selectedTaskDeadline = taskDeadline;
 
     showDialog(
       context: context,
@@ -391,8 +384,36 @@ class _ProjectPageState extends State<ProjectPage> {
             void _addSubtask() {
               setState(() {
                 subtaskControllers.add(TextEditingController());
-                validateSubtasks.add(false);
               });
+            }
+
+            void _pickTaskDeadline(BuildContext context) async {
+              final selectedDate = await showDatePicker(
+                context: context,
+                initialDate: selectedTaskDeadline ?? DateTime.now(),
+                firstDate: DateTime.now(),
+                lastDate: DateTime(2101),
+              );
+
+              if (selectedDate != null) {
+                final selectedTime = await showTimePicker(
+                  context: context,
+                  initialTime: TimeOfDay.fromDateTime(
+                      selectedTaskDeadline ?? DateTime.now()),
+                );
+
+                if (selectedTime != null) {
+                  setState(() {
+                    selectedTaskDeadline = DateTime(
+                      selectedDate.year,
+                      selectedDate.month,
+                      selectedDate.day,
+                      selectedTime.hour,
+                      selectedTime.minute,
+                    );
+                  });
+                }
+              }
             }
 
             return AlertDialog(
@@ -403,12 +424,7 @@ class _ProjectPageState extends State<ProjectPage> {
                   children: <Widget>[
                     TextField(
                       controller: taskNameController,
-                      decoration: InputDecoration(
-                        labelText: 'Task Name',
-                        errorText: validateTaskName
-                            ? 'Task name cannot be empty'
-                            : null,
-                      ),
+                      decoration: InputDecoration(labelText: 'Task Name'),
                     ),
                     SizedBox(height: 20),
                     Align(
@@ -433,9 +449,6 @@ class _ProjectPageState extends State<ProjectPage> {
                                 controller: subtaskControllers[i],
                                 decoration: InputDecoration(
                                   labelText: 'Subtask ${i + 1}',
-                                  errorText: validateSubtasks[i]
-                                      ? 'Subtask cannot be empty'
-                                      : null,
                                 ),
                               ),
                             ),
@@ -444,7 +457,6 @@ class _ProjectPageState extends State<ProjectPage> {
                               onPressed: () {
                                 setState(() {
                                   subtaskControllers.removeAt(i);
-                                  validateSubtasks.removeAt(i);
                                 });
                               },
                             ),
@@ -455,64 +467,48 @@ class _ProjectPageState extends State<ProjectPage> {
                       onPressed: _addSubtask,
                       child: Text('Add Subtask'),
                     ),
+                    Text(
+                      'Task Deadline: ${selectedTaskDeadline != null ? DateFormat('yyyy-MM-dd HH:mm').format(selectedTaskDeadline!) : 'Update Deadline'}',
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          selectedTaskDeadline = null;
+                        });
+                      },
+                      child: Text('Cancel Deadline'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        _pickTaskDeadline(context);
+                      },
+                      child: Text(' Update Task Deadline'),
+                    ),
                     ElevatedButton(
                       onPressed: () async {
-                        // Get the task name from the controller
+                        // Get the updated task name from the controller
                         final String updatedTaskName = taskNameController.text;
 
-                        // Check if the task name is empty
-                        if (updatedTaskName.isEmpty) {
-                          setState(() {
-                            validateTaskName = true;
-                          });
-                        } else {
-                          setState(() {
-                            validateTaskName = false;
-                          });
+                        // Get the updated subtask names from the controllers
+                        final List<String> updatedSubtaskNames =
+                        subtaskControllers.map((controller) => controller.text).toList();
 
-                          // Get the subtask names from the controllers
-                          final List<String> updatedSubtaskNames = subtaskControllers
-                              .map((controller) => controller.text)
-                              .toList();
+                        // Update the task details in Firestore
+                        await FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(FirebaseAuth.instance.currentUser!.uid)
+                            .collection('projects')
+                            .doc(widget.project.id)
+                            .collection('tasks')
+                            .doc(taskId)
+                            .update({
+                          'name': updatedTaskName,
+                          'subtasks': updatedSubtaskNames,
+                          'tasksdeadline': selectedTaskDeadline, // Update the task deadline
+                        });
 
-                          // Check if any subtask is empty
-                          bool subtaskValidationFailed = false;
-                          for (int i = 0; i < updatedSubtaskNames.length; i++) {
-                            if (updatedSubtaskNames[i].isEmpty) {
-                              setState(() {
-                                validateSubtasks[i] = true;
-                              });
-                              subtaskValidationFailed = true;
-                            } else {
-                              setState(() {
-                                validateSubtasks[i] = false;
-                              });
-                            }
-                          }
-
-                          if (!subtaskValidationFailed) {
-                            try {
-                              // Update the task document in Firestore
-                              FirebaseFirestore.instance
-                                  .collection('users')
-                                  .doc(FirebaseAuth.instance.currentUser!.uid)
-                                  .collection('projects')
-                                  .doc(widget.project.id)
-                                  .collection('tasks')
-                                  .doc(taskId) // Update the specific task
-                                  .update({
-                                'name': updatedTaskName,
-                                'subtasks': updatedSubtaskNames,
-                              });
-
-                              // Close the dialog
-                              Navigator.pop(context);
-                            } catch (e) {
-                              // Handle any errors that occur during Firestore operation
-                              print('Error updating task: $e');
-                            }
-                          }
-                        }
+                        // Close the dialog
+                        Navigator.pop(context);
                       },
                       child: Text('Save Changes'),
                     ),
@@ -781,14 +777,8 @@ class _ProjectPageState extends State<ProjectPage> {
                           color: Colors.grey[300],
                         ),
                         child: GestureDetector(
-                          onLongPress: (){
-                            // Call the _editTask function here, passing the task details
-                            _editTask(
-                              context,
-                              taskName, // Task name
-                              List<String>.from(subtasks), // Subtasks as a List
-                              taskDoc.id, // Task ID
-                            );
+                          onLongPress: () {
+                            _editTask(context, taskName, subtasks.cast<String>(), taskDoc.id, taskDeadline);
                           },
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
