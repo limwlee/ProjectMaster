@@ -43,6 +43,7 @@ dependencies:
   syncfusion_flutter_calendar: ^21.2.3
   table_calendar: ^3.0.8
   firebase_messaging: ^14.7.1
+  flutter_local_notifications: ^16.1.0
 
   #cupertino_date_time_picker: ^0.0.4
   #cupertino_date_textbox: ^1.0.3

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -116,63 +117,93 @@ class _SettingPageState extends State<SettingPage> {
       appBar: AppBar(
         title: Text('Setting Page'),
       ),
-      body: Center(
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start, // Align content to the left
+
           children: [
             // Display the user's profile picture
             if (_user != null && _user!.photoURL != null)
-              CircleAvatar(
-                radius: 60, // Adjust the size as needed
-                backgroundImage: NetworkImage(_user!.photoURL!),
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10.0),
+                  border: Border.all(color: Colors.blue)
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 60, // Adjust the size as needed
+                        backgroundImage: NetworkImage(_user!.photoURL!),
+                      ),
+                      SizedBox(width: 5,),
+                      ElevatedButton(
+                        onPressed: () {
+                          _changeProfilePicture();
+                        },
+                        child: Text('Change Profile Picture'),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                _changeProfilePicture();
-              },
-              child: Text('Change Profile Picture'),
-            ),
             SizedBox(height: 16),
             // Display the user's profile data
             if (_user != null)
-              Column(
-                children: [
-                  Text('Name: ${_user!.displayName ?? 'N/A'}'),
-                  SizedBox(height: 5),
-                  Text('Email: ${_user!.email ?? 'N/A'}'),
-                  SizedBox(height: 5),
-                  Text('UID: ${_user!.uid ?? 'N/A'}'),
-                  SizedBox(height: 5),
-                  // Display email verification status
-                  if (_user!.emailVerified)
-                    Text('Email Verified', style: TextStyle(color: Colors.green)),
-                  if (!_user!.emailVerified)
-                    Text('Email Not Verified', style: TextStyle(color: Colors.red)),
-                  //
-                  // You can display more user data as needed
-                ],
+              Container(
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10.0),
+                    border: Border.all(color: Colors.blue)
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Name: ${_user!.displayName ?? 'N/A'}'),
+                      Divider(),
+                      Text('Email: ${_user!.email ?? 'N/A'}'),
+                      Divider(),
+                      Text('UID: ${_user!.uid ?? 'N/A'}'),
+                      Divider(),
+                      // Display email verification status
+                      if (_user!.emailVerified)
+                        Text('Email Verified', style: TextStyle(color: Colors.green)),
+                      if (!_user!.emailVerified)
+                        Text('Email Not Verified', style: TextStyle(color: Colors.red)),
+                      //
+                      // You can display more user data as needed
+                    ],
+                  ),
+                ),
               ),
-            // Add your settings content here
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                _handleLogout(context);
-              },
-              child: Text('Logout'),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      _confirmLogout(context);
+                    },
+                    child: Text('Logout'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
     );
   }
+
   void _handleLogout(BuildContext context) async {
     try {
       await FirebaseAuth.instance.signOut();
       // After successful logout, you can navigate to the login page or any other page as needed.
       Navigator.of(context).pushReplacement(MaterialPageRoute(
         builder: (context)=>LoginPage(),
-        )); // Replace with your login route
+      )); // Replace with your login route
     } catch (e) {
       print('Logout error: $e');
       // Handle logout error
@@ -183,5 +214,34 @@ class _SettingPageState extends State<SettingPage> {
       );
     }
   }
+  void _confirmLogout(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text('Confirm Logout'),
+          content: Text('Are you sure you want to log out?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(); // Close the dialog
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                _handleLogout(context); // Perform the logout
+                Navigator.of(dialogContext).pop(); // Close the dialog
+              },
+              child: Text('Logout'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
 }
+
 

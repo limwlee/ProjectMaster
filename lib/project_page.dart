@@ -271,6 +271,7 @@ class _ProjectPageState extends State<ProjectPage> {
                                   'name': taskName,
                                   'subtasks': subtaskNames,
                                   'tasksdeadline': selectedTaskDeadline, // Store the selected task deadline
+                                  'isComplete' : false,// Default the task not complete
                                 });
 
                                 // You can now use the taskRef if needed
@@ -412,6 +413,36 @@ class _ProjectPageState extends State<ProjectPage> {
                 subtaskControllers.add(TextEditingController());
               });
             }
+            // Function to remove a subtask
+            void _removeSubtask(int index) {
+              showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: Text('Confirm Deletion'),
+                    content: Text('Are you sure you want to delete this subtask?'),
+                    actions: <Widget>[
+                      TextButton(
+                        child: Text('Cancel'),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      TextButton(
+                        child: Text('Delete'),
+                        onPressed: () {
+                          setState(() {
+                            subtaskControllers.removeAt(index);
+                          });
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+            }
+
 
             void _pickTaskDeadline(BuildContext context) async {
               final selectedDate = await showDatePicker(
@@ -443,7 +474,44 @@ class _ProjectPageState extends State<ProjectPage> {
             }
 
             return AlertDialog(
-              title: Text('Edit Task'),
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Edit Task'),
+                  IconButton(
+                    icon: Icon(Icons.delete), // Add the delete task button here
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: Text('Delete Task'),
+                            content: Text('Are you sure you want to delete this task?'),
+                            actions: <Widget>[
+                              TextButton(
+                                child: Text('Cancel'),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                              TextButton(
+                                child: Text('Delete'),
+                                onPressed: () {
+                                  // Delete the task and close the dialog
+                                  _deleteTask(taskId);
+                                  Navigator.of(context).pop();
+                                  Navigator.of(context).pop();
+                                  // You might also want to navigate back or update the UI.
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ],
+              ),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -481,9 +549,7 @@ class _ProjectPageState extends State<ProjectPage> {
                             IconButton(
                               icon: Icon(Icons.remove),
                               onPressed: () {
-                                setState(() {
-                                  subtaskControllers.removeAt(i);
-                                });
+                                _removeSubtask(i);
                               },
                             ),
                           ],
@@ -546,6 +612,28 @@ class _ProjectPageState extends State<ProjectPage> {
         );
       },
     );
+  }
+
+  void _deleteTask(String taskId) {
+    try {
+      // Get a reference to the Firestore instance
+      final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+      // Delete the task document from Firestore
+      firestore
+          .collection('users')
+          .doc(FirebaseAuth.instance.currentUser!.uid)
+          .collection('projects')
+          .doc(widget.project.id)
+          .collection('tasks')
+          .doc(taskId)
+          .delete();
+
+      // Optionally, you can update the UI or take other actions as needed
+    } catch (e) {
+      // Handle any errors that occur during Firestore operation
+      print('Error deleting task: $e');
+    }
   }
 
   Future<DateTime?> _pickProjectDeadline(BuildContext context, DateTime? initialDate) async {
@@ -904,3 +992,5 @@ class _ProjectPageState extends State<ProjectPage> {
     );
   }
 }
+
+

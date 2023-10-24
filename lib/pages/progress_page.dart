@@ -11,6 +11,8 @@ class ProgressPage extends StatefulWidget {
 }
 
 class _ProgressPageState extends State<ProgressPage> {
+  bool isSecondRowVisible = false; // Initially, the second row is not visible
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -57,33 +59,118 @@ class _ProgressPageState extends State<ProgressPage> {
                           borderRadius: BorderRadius.circular(10.0),
                         ),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Project: $projectName'),
-                            Text('Total Tasks: $totalTasks'),
-                            Text('Completed Tasks: $completedTasks'),
-                            Text('Incomplete Tasks: $incompleteTasks'),
-                            Text('Completion Percentage: ${completionPercentage.toStringAsFixed(2)}% completed'),
-                            SizedBox(height: 10),
-                            SfCircularChart(
-                              series: <DoughnutSeries<_ChartData, String>>[
-                                DoughnutSeries<_ChartData, String>(
-                                  dataSource: <_ChartData>[
-                                    _ChartData('Completed', completedTasks),
-                                    _ChartData('Incomplete', incompleteTasks),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Project: $projectName'
+                                      ,style: TextStyle(
+                                        fontWeight: FontWeight.bold
+                                      ),
+                                    ),
+                                    Text('Total Tasks: $totalTasks'),
+                                    Text('Completed Tasks: $completedTasks'),
+                                    Text('Incomplete Tasks: $incompleteTasks'),
+                                    Text('Completion Percentage:'),
+                                    Text('${completionPercentage.toStringAsFixed(2)}% completed'),
+                                    SizedBox(height: 10),
                                   ],
-                                  xValueMapper: (_ChartData data, _) => data.x,
-                                  yValueMapper: (_ChartData data, _) => data.y,
-                                  dataLabelMapper: (_ChartData data, _) =>
-                                  '${(data.y / totalTasks * 100).toStringAsFixed(2)}%',
-                                  dataLabelSettings: DataLabelSettings(
-                                    isVisible: true, // Set to true to show labels
-                                    labelPosition: ChartDataLabelPosition.inside, // Adjust the position
+                                ),
+                                Container (
+                                  width: 100,  // Set the desired width
+                                  height: 100,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey,
+                                    borderRadius: BorderRadius.circular(20.0),
+                                  ),// Set the desired height
+                                  child: SfCircularChart(
+                                    series: <DoughnutSeries<_ChartData, String>>[
+                                      DoughnutSeries<_ChartData, String>(
+                                        dataSource: <_ChartData>[
+                                          _ChartData('Completed', completedTasks),
+                                          _ChartData('Incomplete', incompleteTasks),
+                                        ],
+                                        xValueMapper: (_ChartData data, _) => data.x,
+                                        yValueMapper: (_ChartData data, _) => data.y,
+                                        dataLabelMapper: (_ChartData data, _) =>
+                                        '${(data.y / totalTasks * 100).toStringAsFixed(2)}%',
+                                        dataLabelSettings: DataLabelSettings(
+                                          isVisible: true, // Set to true to show labels
+                                          labelPosition: ChartDataLabelPosition.inside, // Adjust the position
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
-                            )
-
+                            ),
+                            SizedBox(height: 10,),
+                            Visibility(
+                              visible: isSecondRowVisible,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Container(
+                                    width: 150,
+                                    height: 150, // Adjust the height as needed
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                          color: Colors.grey,
+                                          borderRadius: BorderRadius.circular(10.0)
+                                      ),
+                                      child: SfCartesianChart(
+                                        primaryXAxis: CategoryAxis(),
+                                        primaryYAxis: NumericAxis(),
+                                        series: <LineSeries<_ChartData, String>>[
+                                          LineSeries<_ChartData, String>(
+                                            dataSource: <_ChartData>[
+                                              _ChartData('Completed', completedTasks),
+                                              _ChartData('Incomplete', incompleteTasks),
+                                            ],
+                                            xValueMapper: (_ChartData data, _) => data.x,
+                                            yValueMapper: (_ChartData data, _) => data.y,
+                                            markerSettings: MarkerSettings(isVisible: true),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 150,
+                                    height: 150,
+                                    decoration: BoxDecoration(
+                                        color: Colors.grey,
+                                        borderRadius: BorderRadius.circular(10.0)
+                                    ),
+                                    child: SfCartesianChart(
+                                      primaryXAxis: CategoryAxis(),
+                                      primaryYAxis: NumericAxis(),
+                                      series: <BarSeries<_ChartData, String>>[
+                                        BarSeries<_ChartData, String>(
+                                          dataSource: <_ChartData>[
+                                            _ChartData('Completed', completedTasks),
+                                            _ChartData('Incomplete', incompleteTasks),
+                                          ],
+                                          xValueMapper: (_ChartData data, _) => data.x,
+                                          yValueMapper: (_ChartData data, _) => data.y,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  isSecondRowVisible = !isSecondRowVisible;
+                                });
+                              },
+                              icon: Icon(isSecondRowVisible ? Icons.expand_less : Icons.expand_more),
+                            ),
                           ],
                         ),
                       );

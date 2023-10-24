@@ -74,7 +74,6 @@ class _TasksPageState extends State<TasksPage> {
   }
 
   Widget _buildTodayContent() {
-    // Calculate the start and end of today
     final now = DateTime.now();
     final startOfToday = DateTime(now.year, now.month, now.day);
     final endOfToday = startOfToday.add(Duration(days: 1));
@@ -122,11 +121,11 @@ class _TasksPageState extends State<TasksPage> {
 
                 final tasks = taskSnapshot.data;
 
-                if (tasks == null || tasks.docs.isEmpty) {
-                  return Container(); // Hide projects without tasks due today
+                if (tasks == null) {
+                  return Text('No tasks found for today.');
                 }
 
-                return Container(
+                return tasks.docs.isNotEmpty ? Container(
                   margin: EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: Colors.black12,
@@ -151,10 +150,12 @@ class _TasksPageState extends State<TasksPage> {
 
                           return Padding(
                             padding: const EdgeInsets.all(10.0),
-                            child: Text('Project Name: $projectName',
+                            child: Text(
+                              'Project Name: $projectName',
                               style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize:16),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                             ),
                           );
                         },
@@ -165,7 +166,6 @@ class _TasksPageState extends State<TasksPage> {
                         final subtasks = taskData['subtasks'] as List<dynamic>;
                         final deadlineTimestamp = taskData['tasksdeadline'] as Timestamp?;
 
-                        // Check if the deadline has already passed
                         final isOverdue =
                             deadlineTimestamp != null && deadlineTimestamp.toDate().isBefore(DateTime.now());
 
@@ -173,7 +173,6 @@ class _TasksPageState extends State<TasksPage> {
                             ? DateFormat('yyyy-MM-dd HH:mm').format(deadlineTimestamp.toDate())
                             : 'No deadline specified';
 
-                        // Set border color based on whether the task is overdue
                         final borderColor = isOverdue ? Colors.red : Colors.green;
 
                         return Container(
@@ -199,6 +198,32 @@ class _TasksPageState extends State<TasksPage> {
                       }).toList(),
                     ],
                   ),
+                ) : Container(
+                  margin: EdgeInsets.all(10),
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.blue),
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  child: ListTile(
+                    title: StreamBuilder<DocumentSnapshot>(
+                      stream: project.reference.snapshots(),
+                      builder: (context, projectSnapshot) {
+                        if (projectSnapshot.connectionState == ConnectionState.waiting) {
+                          return CircularProgressIndicator();
+                        }
+
+                        if (projectSnapshot.hasError) {
+                          return Text('Error: ${projectSnapshot.error}');
+                        }
+
+                        final projectName = projectSnapshot.data?['name'] as String;
+
+                        return Text('Project Name: $projectName', style: TextStyle(fontWeight: FontWeight.bold));
+                      },
+                    ),
+                    subtitle: Text('No tasks due today'),
+                  ),
                 );
               },
             );
@@ -209,7 +234,6 @@ class _TasksPageState extends State<TasksPage> {
   }
 
   Widget _buildThisWeekContent() {
-    // Calculate the start and end of the week
     final today = DateTime.now();
     final startOfWeek = today.subtract(Duration(days: today.weekday - 1));
     final endOfWeek = startOfWeek.add(Duration(days: 7));
@@ -257,11 +281,11 @@ class _TasksPageState extends State<TasksPage> {
 
                 final tasks = taskSnapshot.data;
 
-                if (tasks == null || tasks.docs.isEmpty) {
-                  return Container(); // Hide projects without tasks due this week
+                if (tasks == null) {
+                  return Text('No tasks found for this week.');
                 }
 
-                return Container(
+                return tasks.docs.isNotEmpty ? Container(
                   margin: EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: Colors.black12,
@@ -286,10 +310,12 @@ class _TasksPageState extends State<TasksPage> {
 
                           return Padding(
                             padding: const EdgeInsets.all(10.0),
-                            child: Text('Project Name: $projectName',
+                            child: Text(
+                              'Project Name: $projectName',
                               style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize:16),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                             ),
                           );
                         },
@@ -300,7 +326,6 @@ class _TasksPageState extends State<TasksPage> {
                         final subtasks = taskData['subtasks'] as List<dynamic>;
                         final deadlineTimestamp = taskData['tasksdeadline'] as Timestamp?;
 
-                        // Check if the deadline has already passed
                         final isOverdue =
                             deadlineTimestamp != null && deadlineTimestamp.toDate().isBefore(DateTime.now());
 
@@ -308,10 +333,13 @@ class _TasksPageState extends State<TasksPage> {
                             ? DateFormat('yyyy-MM-dd HH:mm').format(deadlineTimestamp.toDate())
                             : 'No deadline specified';
 
-                        return Container( // Wrap each task with a Container
+                        final borderColor = isOverdue ? Colors.red : Colors.green;
+
+                        return Container(
                           margin: EdgeInsets.all(10),
+                          padding: EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            border: Border.all(color: isOverdue ? Colors.red : Colors.green), // Set border color based on overdue status
+                            border: Border.all(color: borderColor),
                             borderRadius: BorderRadius.circular(10.0),
                           ),
                           child: ListTile(
@@ -319,16 +347,42 @@ class _TasksPageState extends State<TasksPage> {
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Deadline: $deadline', style: TextStyle(color: isOverdue ? Colors.red : null)),
+                                Text('Deadline: $deadline', style: TextStyle(color: borderColor)),
                                 if (subtasks != null && subtasks.isNotEmpty)
                                   Text('Subtasks: ${subtasks.join(", ")}'),
-                                if (isOverdue) Text('The task is overdue', style: TextStyle(color: Colors.red)),
+                                if (isOverdue) Text('The task is overdue', style: TextStyle(color: borderColor)),
                               ],
                             ),
                           ),
                         );
                       }).toList(),
                     ],
+                  ),
+                ) : Container(
+                  margin: EdgeInsets.all(10),
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.blue),
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  child: ListTile(
+                    title: StreamBuilder<DocumentSnapshot>(
+                      stream: project.reference.snapshots(),
+                      builder: (context, projectSnapshot) {
+                        if (projectSnapshot.connectionState == ConnectionState.waiting) {
+                          return CircularProgressIndicator();
+                        }
+
+                        if (projectSnapshot.hasError) {
+                          return Text('Error: ${projectSnapshot.error}');
+                        }
+
+                        final projectName = projectSnapshot.data?['name'] as String;
+
+                        return Text('Project Name: $projectName', style: TextStyle(fontWeight: FontWeight.bold));
+                      },
+                    ),
+                    subtitle: Text('No tasks due this week'),
                   ),
                 );
               },
@@ -340,7 +394,6 @@ class _TasksPageState extends State<TasksPage> {
   }
 
   Widget _buildThisMonthContent() {
-    // Calculate the start and end of the month
     final today = DateTime.now();
     final startOfMonth = DateTime(today.year, today.month, 1);
     final endOfMonth = DateTime(today.year, today.month + 1, 0);
@@ -388,11 +441,11 @@ class _TasksPageState extends State<TasksPage> {
 
                 final tasks = taskSnapshot.data;
 
-                if (tasks == null || tasks.docs.isEmpty) {
-                  return Container(); // Hide projects without tasks due this month
+                if (tasks == null) {
+                  return Text('No tasks found for this month.');
                 }
 
-                return Container(
+                return tasks.docs.isNotEmpty ? Container(
                   margin: EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: Colors.black12,
@@ -433,7 +486,6 @@ class _TasksPageState extends State<TasksPage> {
                         final subtasks = taskData['subtasks'] as List<dynamic>;
                         final deadlineTimestamp = taskData['tasksdeadline'] as Timestamp?;
 
-                        // Check if the deadline has already passed
                         final isOverdue =
                             deadlineTimestamp != null && deadlineTimestamp.toDate().isBefore(DateTime.now());
 
@@ -441,12 +493,13 @@ class _TasksPageState extends State<TasksPage> {
                             ? DateFormat('yyyy-MM-dd HH:mm').format(deadlineTimestamp.toDate())
                             : 'No deadline specified';
 
+                        final borderColor = isOverdue ? Colors.red : Colors.green;
+
                         return Container(
-                          margin: EdgeInsets.all(10), // Add margin around each task
+                          margin: EdgeInsets.all(10),
+                          padding: EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            border: Border.all(
-                              color: isOverdue ? Colors.red : Colors.green,
-                            ),
+                            border: Border.all(color: borderColor),
                             borderRadius: BorderRadius.circular(10.0),
                           ),
                           child: ListTile(
@@ -454,16 +507,42 @@ class _TasksPageState extends State<TasksPage> {
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Deadline: $deadline', style: TextStyle(color: isOverdue ? Colors.red : null)),
+                                Text('Deadline: $deadline', style: TextStyle(color: borderColor)),
                                 if (subtasks != null && subtasks.isNotEmpty)
                                   Text('Subtasks: ${subtasks.join(", ")}'),
-                                if (isOverdue) Text('The task is overdue', style: TextStyle(color: Colors.red)),
+                                if (isOverdue) Text('The task is overdue', style: TextStyle(color: borderColor)),
                               ],
                             ),
                           ),
                         );
                       }).toList(),
                     ],
+                  ),
+                ) : Container(
+                  margin: EdgeInsets.all(10),
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.blue),
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  child: ListTile(
+                    title: StreamBuilder<DocumentSnapshot>(
+                      stream: project.reference.snapshots(),
+                      builder: (context, projectSnapshot) {
+                        if (projectSnapshot.connectionState == ConnectionState.waiting) {
+                          return CircularProgressIndicator();
+                        }
+
+                        if (projectSnapshot.hasError) {
+                          return Text('Error: ${projectSnapshot.error}');
+                        }
+
+                        final projectName = projectSnapshot.data?['name'] as String;
+
+                        return Text('Project Name: $projectName', style: TextStyle(fontWeight: FontWeight.bold));
+                      },
+                    ),
+                    subtitle: Text('No tasks due this month'),
                   ),
                 );
               },
@@ -517,11 +596,12 @@ class _TasksPageState extends State<TasksPage> {
 
                 final tasks = taskSnapshot.data;
 
-                if (tasks == null || tasks.docs.isEmpty) {
-                  return Container(); // Hide projects without tasks with no date
+                if (tasks == null) {
+                  return Text('No tasks found with no date.');
                 }
 
-                return Container(
+                return tasks.docs.isNotEmpty
+                    ? Container(
                   margin: EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: Colors.black12,
@@ -562,7 +642,7 @@ class _TasksPageState extends State<TasksPage> {
                         final subtasks = taskData['subtasks'] as List<dynamic>;
 
                         return Container(
-                          margin: EdgeInsets.all(10), // Add margin around each task
+                          margin: EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.blue),
                             borderRadius: BorderRadius.circular(10.0),
@@ -581,6 +661,32 @@ class _TasksPageState extends State<TasksPage> {
                         );
                       }).toList(),
                     ],
+                  ),
+                )
+                    : Container(
+                  margin: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.blue),
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  child: ListTile(
+                    title: StreamBuilder<DocumentSnapshot>(
+                      stream: project.reference.snapshots(),
+                      builder: (context, projectSnapshot) {
+                        if (projectSnapshot.connectionState == ConnectionState.waiting) {
+                          return CircularProgressIndicator();
+                        }
+
+                        if (projectSnapshot.hasError) {
+                          return Text('Error: ${projectSnapshot.error}');
+                        }
+
+                        final projectName = projectSnapshot.data?['name'] as String;
+
+                        return Text('Project Name: $projectName', style: TextStyle(fontWeight: FontWeight.bold));
+                      },
+                    ),
+                    subtitle: Text('No tasks with no date'),
                   ),
                 );
               },
@@ -636,11 +742,7 @@ class _TasksPageState extends State<TasksPage> {
 
                 final tasks = taskSnapshot.data;
 
-                if (tasks == null || tasks.docs.isEmpty) {
-                  return Container(); // Hide projects without overdue tasks
-                }
-
-                return Container(
+                return tasks!.docs.isNotEmpty ? Container(
                   margin: EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: Colors.black12,
@@ -686,7 +788,8 @@ class _TasksPageState extends State<TasksPage> {
                             : 'No deadline specified';
 
                         return Container(
-                          margin: EdgeInsets.all(10), // Add margin around each task
+                          margin: EdgeInsets.all(10),
+                          padding: EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.blue),
                             borderRadius: BorderRadius.circular(10.0),
@@ -707,6 +810,32 @@ class _TasksPageState extends State<TasksPage> {
                       }).toList(),
                     ],
                   ),
+                ) : Container(
+                  margin: EdgeInsets.all(10),
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.blue),
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  child: ListTile(
+                    title: StreamBuilder<DocumentSnapshot>(
+                      stream: project.reference.snapshots(),
+                      builder: (context, projectSnapshot) {
+                        if (projectSnapshot.connectionState == ConnectionState.waiting) {
+                          return CircularProgressIndicator();
+                        }
+
+                        if (projectSnapshot.hasError) {
+                          return Text('Error: ${projectSnapshot.error}');
+                        }
+
+                        final projectName = projectSnapshot.data?['name'] as String;
+
+                        return Text('Project Name: $projectName', style: TextStyle(fontWeight: FontWeight.bold));
+                      },
+                    ),
+                    subtitle: Text('No overdue tasks'),
+                  ),
                 );
               },
             );
@@ -715,6 +844,7 @@ class _TasksPageState extends State<TasksPage> {
       },
     );
   }
+
 
 
 }
