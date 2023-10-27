@@ -38,17 +38,12 @@ class _SettingPageState extends State<SettingPage> {
           .doc(user.uid)
           .get();
 
-      if (userDoc.exists) {
-        setState(() {
-          _user = user;
-          _newIntroduction = userDoc.data()?['introduction'];
-          _newVacation = userDoc.data()?['vacation'];
-          _newAwayMode = userDoc.data()?['away_mode'];
-          print('Introduction: $_newIntroduction');
-          print('Vacation: $_newVacation');
-          print('Away Mode: $_newAwayMode');
-        });
-      }
+      setState(() {
+        _user = user;
+        _newIntroduction = userDoc.data()?['introduction'] ?? '';
+        _newVacation = userDoc.data()?['vacation'] ??  'Student';
+        _newAwayMode = userDoc.data()?['awaymode'] ?? 'Online';
+      });
     }
   }
 

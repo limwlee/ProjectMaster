@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:google_ml_kit/google_ml_kit.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:project_master/pages/home_page.dart';
 import 'package:project_master/project.dart';
@@ -22,18 +24,41 @@ class _ProjectPageState extends State<ProjectPage> {
   DateTime? selectedTaskDeadline;
   late TextEditingController projectDeadlineController;
   DateTime? taskDeadline;
+  TextEditingController noteController = TextEditingController();
+  String existingNote = ''; // To store the existing note content
 
   @override
   void initState() {
     super.initState();
     // Fetch the project's deadline from Firestore
     _fetchProjectDeadline();
+    _fetchNoteData();
 
     projectDeadlineController = TextEditingController(
       text: _projectDeadline != null
           ? DateFormat('yyyy-MM-dd HH:mm').format(_projectDeadline!)
           : 'Update Deadline',
     );
+  }
+
+  void _fetchNoteData() async {
+    final userUid = FirebaseAuth.instance.currentUser!.uid;
+    final projectDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userUid)
+        .collection('projects')
+        .doc(widget.project.id)
+        .get();
+
+    if (projectDoc.exists) {
+      final projectData = projectDoc.data() as Map<String, dynamic>;
+      final note = projectData['note'] as String?;
+      if (note != null) {
+        setState(() {
+          existingNote = note;
+        });
+      }
+    }
   }
 
   void _fetchProjectDeadline() async {
@@ -636,6 +661,133 @@ class _ProjectPageState extends State<ProjectPage> {
     }
   }
 
+  void _openNoteDrawer(BuildContext context) {
+    noteController.text = existingNote; // Set the text field with existing note content
+
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Container(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Edit Note',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 10),
+              TextField(
+                controller: noteController,
+                maxLines: 5, // Adjust the number of lines as needed
+                decoration: InputDecoration(
+                  hintText: 'Type your note here...',
+                ),
+              ),
+              SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () async {
+                  // Save the updated note content to Firestore
+                  String noteContent = noteController.text;
+
+                  try {
+                    await FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(FirebaseAuth.instance.currentUser!.uid)
+                        .collection('projects')
+                        .doc(widget.project.id)
+                        .update({'note': noteContent});
+
+                    setState(() {
+                      existingNote = noteContent;
+                    });
+
+                    // Close the bottom sheet
+                    Navigator.of(context).pop();
+                  } catch (e) {
+                    // Handle any errors that occur during Firestore operation
+                    print('Error saving note: $e');
+                  }
+                },
+                child: Text('Save Note'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  _textScanner();
+                },
+                child: Text('Text Scanner'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _textScanner() async {
+    // Create an instance of the image picker
+    final picker = ImagePicker();
+
+    // Show a dialog to let the user choose between taking a photo or selecting from the gallery
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Choose an option'),
+        content: Text('Take a photo or select from the gallery?'),
+        actions: <Widget>[
+          TextButton(
+            child: Text('Take a Photo'),
+            onPressed: () async {
+              Navigator.of(context).pop();
+              final pickedFile = await picker.pickImage(source: ImageSource.camera);
+              if (pickedFile != null) {
+                // Perform text recognition on the taken photo
+                _processImage(pickedFile.path);
+              }
+            },
+          ),
+          TextButton(
+            child: Text('Select from Gallery'),
+            onPressed: () async {
+              Navigator.of(context).pop();
+              final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+              if (pickedFile != null) {
+                // Perform text recognition on the selected image
+                _processImage(pickedFile.path);
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+// Function to perform text recognition on an image
+  Future<void> _processImage(String imagePath) async {
+    final textRecognizer = GoogleMlKit.vision.textRecognizer();
+
+    try {
+      final inputImage = InputImage.fromFilePath(imagePath);
+      final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
+
+      String detectedText = recognizedText.text;
+
+      print('Detected Text: $detectedText');
+
+      // You can handle the detected text as needed, for example, display it in a dialog or update the UI
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Detected Text'),
+          content: Text(detectedText),
+        ),
+      );
+    } catch (e) {
+      print('Error recognizing text: $e');
+    } finally {
+      textRecognizer.close();
+    }
+  }
+
   Future<DateTime?> _pickProjectDeadline(BuildContext context, DateTime? initialDate) async {
     DateTime currentDate = DateTime.now();
     DateTime initial = initialDate ?? currentDate;
@@ -742,11 +894,19 @@ class _ProjectPageState extends State<ProjectPage> {
               _showEditProjectDialog(context);
             },
           ),
-          IconButton(icon: Icon(Icons.content_copy), // Add the Duplicate Project icon here
+          IconButton(
+            icon: Icon(Icons.content_copy), // Add the Duplicate Project icon here
             onPressed: () {
               _duplicateProject();
-            },)
-        ],// Display the project name as the title
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.edit_note),
+            onPressed: (){
+              _openNoteDrawer(context); // User can write down the the note
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         controller: _scrollController,

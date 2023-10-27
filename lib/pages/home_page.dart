@@ -243,68 +243,68 @@ class _HomePageState extends State<HomePage> {
                           .doc(_auth.currentUser!.uid)
                           .collection('projects')
                           .snapshots(),
-                    builder: (context,snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(
-                          child: CircularProgressIndicator(),
-                        );
-                      } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                        return const Center(
-                          child: Text('No projects found.'),
+                      builder: (context,snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                          return const Center(
+                            child: Text('No projects found.'),
+                          );
+                        }
+                        final projects = snapshot.data!.docs;
+
+                        // Create a list of appointments from the projects
+                        final appointments = projects.map((project) {
+                          final projectData = project.data() as Map<String, dynamic>;
+                          final projectName = projectData['name'];
+                          final projectDeadlineTimestamp = projectData['deadline'];
+                          final projectDeadline = projectDeadlineTimestamp.toDate();
+
+                          return Appointment(
+                            startTime: projectDeadline,
+                            endTime: projectDeadline,
+                            subject: projectName,
+                            color: Colors.blue,
+                          );
+                        }).toList();
+
+                        return SfCalendar(
+                          view: CalendarView.month,
+                          monthViewSettings: MonthViewSettings(
+                            showAgenda: true,
+                          ),
+                          dataSource: MyCalendarDataSource(appointments),
+                          appointmentBuilder: (BuildContext context, CalendarAppointmentDetails details) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: details.appointments.map((appointment) {
+                                final projectName = appointment.subject;
+                                final projectDeadline = DateFormat('yyyy-MM-dd HH:mm').format(appointment.startTime);
+
+                                return Container(
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    color: appointment.color, // Use the event color if needed
+                                    borderRadius: BorderRadius.circular(8.0),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(projectName),
+                                        Text('Deadline: $projectDeadline'),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            );
+                          },
                         );
                       }
-                      final projects = snapshot.data!.docs;
-
-                      // Create a list of appointments from the projects
-                      final appointments = projects.map((project) {
-                        final projectData = project.data() as Map<String, dynamic>;
-                        final projectName = projectData['name'];
-                        final projectDeadlineTimestamp = projectData['deadline'];
-                        final projectDeadline = projectDeadlineTimestamp.toDate();
-
-                        return Appointment(
-                          startTime: projectDeadline,
-                          endTime: projectDeadline,
-                          subject: projectName,
-                          color: Colors.blue,
-                        );
-                      }).toList();
-
-                      return SfCalendar(
-                        view: CalendarView.month,
-                        monthViewSettings: MonthViewSettings(
-                          showAgenda: true,
-                        ),
-                        dataSource: MyCalendarDataSource(appointments),
-                        appointmentBuilder: (BuildContext context, CalendarAppointmentDetails details) {
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: details.appointments.map((appointment) {
-                              final projectName = appointment.subject;
-                              final projectDeadline = DateFormat('yyyy-MM-dd HH:mm').format(appointment.startTime);
-
-                              return Container(
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: appointment.color, // Use the event color if needed
-                                  borderRadius: BorderRadius.circular(8.0),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(projectName),
-                                      Text('Deadline: $projectDeadline'),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          );
-                        },
-                      );
-                    }
                   ),
                 ),
               ],
@@ -463,9 +463,9 @@ class _HomePageState extends State<HomePage> {
                   Navigator.of(context).pop();
 
                   ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Project saved successfully.'),
-                      ), // Close the dialog
+                    SnackBar(
+                      content: Text('Project saved successfully.'),
+                    ), // Close the dialog
 
                   );
                 } catch (e) {
