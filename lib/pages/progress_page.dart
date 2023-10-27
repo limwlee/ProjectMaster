@@ -12,6 +12,7 @@ class ProgressPage extends StatefulWidget {
 
 class _ProgressPageState extends State<ProgressPage> {
   bool isSecondRowVisible = false; // Initially, the second row is not visible
+  List<bool> isRowVisible = []; // List to track visibility for each project
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +39,10 @@ class _ProgressPageState extends State<ProgressPage> {
               itemBuilder: (context, index) {
                 final project = projects[index];
                 final projectName = project['name']; // Adjust this to match your Firestore data structure
+                // Initialize isRowVisible list for each project
+                if (index >= isRowVisible.length) {
+                  isRowVisible.add(false);
+                }
 
                 return FutureBuilder(
                   future: _getProjectTaskCount(project.reference),
@@ -109,7 +114,7 @@ class _ProgressPageState extends State<ProgressPage> {
                             ),
                             SizedBox(height: 10,),
                             Visibility(
-                              visible: isSecondRowVisible,
+                              visible: isRowVisible[index], // Use the state for this specific project,
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
@@ -166,10 +171,10 @@ class _ProgressPageState extends State<ProgressPage> {
                             IconButton(
                               onPressed: () {
                                 setState(() {
-                                  isSecondRowVisible = !isSecondRowVisible;
+                                  isRowVisible[index] = !isRowVisible[index];
                                 });
                               },
-                              icon: Icon(isSecondRowVisible ? Icons.expand_less : Icons.expand_more),
+                              icon: Icon(isRowVisible[index] ? Icons.expand_less : Icons.expand_more),
                             ),
                           ],
                         ),

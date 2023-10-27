@@ -326,11 +326,12 @@ class _HomePageState extends State<HomePage> {
   //-------------------add project dialog---------------------------
 
   Future<void> _showAddProjectDialog(BuildContext context) async {
-    //DateTime selectedDeadline = DateTime.now(); // Initialize with the current date and time
+    DateTime selectedDeadline = DateTime.now(); // Initialize with the current date and time
+    bool isDeadlineSelected = false;
 
     return showDialog<void>(
       context: context,
-      barrierDismissible: false, // Dialog cannot be dismissed by tapping outside
+      //barrierDismissible: false, // Dialog cannot be dismissed by tapping outside
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Add Project'),
@@ -374,6 +375,7 @@ class _HomePageState extends State<HomePage> {
                                     selectedTime.hour,
                                     selectedTime.minute,
                                   );
+                                  isDeadlineSelected = true;
                                 });
                               }
                             }
@@ -382,7 +384,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ],
                     ),
-                    Text('Selected Deadline: ${_selectedDeadline.toString()}'),
+                    Text('Selected Deadline: ${isDeadlineSelected ? _selectedDeadline.toString() : 'No set'}'),
                   ],
                 );
               }
@@ -407,6 +409,17 @@ class _HomePageState extends State<HomePage> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Project name and description cannot be empty.'),
+                    ),
+                  );
+                  return;
+                }
+
+                // Check if the deadline is empty (not set)
+                if (!isDeadlineSelected) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Please select a deadline for the project.'),
                     ),
                   );
                   return;
@@ -447,13 +460,13 @@ class _HomePageState extends State<HomePage> {
 
 
 
-                  // Close the dialog
                   Navigator.of(context).pop();
 
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Project saved successfully.'),
-                    ),
+                      SnackBar(
+                        content: Text('Project saved successfully.'),
+                      ), // Close the dialog
+
                   );
                 } catch (e) {
                   print('Project save error: $e');

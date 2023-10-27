@@ -4,7 +4,7 @@ class Project {
   String name;
   String description;
   DateTime deadline;
-  List<Task> tasks; // Add a list of tasks
+  List<Task> tasks;// Add a list of tasks
   //bool isSelected;
 
   Project({

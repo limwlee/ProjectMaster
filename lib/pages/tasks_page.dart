@@ -95,8 +95,10 @@ class _TasksPageState extends State<TasksPage> {
 
         final projects = snapshot.data;
 
-        if (projects == null) {
-          return Text('No projects found for today.');
+        if (projects == null|| projects.docs.isEmpty) {
+          return Center(
+              child: Text('No projects found.',style: TextStyle(fontWeight: FontWeight.bold),)
+          );
         }
 
         return ListView.builder(
@@ -255,8 +257,12 @@ class _TasksPageState extends State<TasksPage> {
 
         final projects = snapshot.data;
 
-        if (projects == null) {
-          return Text('No projects found for this week.');
+        if (projects == null|| projects.docs.isEmpty) {
+          return Center(
+              child: Text('No projects found.',style: TextStyle(
+                fontWeight: FontWeight.bold,
+              ),)
+          );
         }
 
         return ListView.builder(
@@ -415,8 +421,8 @@ class _TasksPageState extends State<TasksPage> {
 
         final projects = snapshot.data;
 
-        if (projects == null) {
-          return Text('No projects found for this month.');
+        if (projects == null|| projects.docs.isEmpty) {
+          return Center(child: Text('No projects found.',style: TextStyle(fontWeight: FontWeight.bold),));
         }
 
         return ListView.builder(
@@ -571,8 +577,8 @@ class _TasksPageState extends State<TasksPage> {
 
         final projects = snapshot.data;
 
-        if (projects == null) {
-          return Text('No projects found with no date.');
+        if (projects == null|| projects.docs.isEmpty) {
+          return Center(child: Text('No projects found. ',style: TextStyle(fontWeight: FontWeight.bold),));
         }
 
         return ListView.builder(
@@ -715,10 +721,11 @@ class _TasksPageState extends State<TasksPage> {
           return Text('Error: ${snapshot.error}');
         }
 
+
         final projects = snapshot.data;
 
-        if (projects == null) {
-          return Text('No projects found with overdue tasks.');
+        if (projects == null|| projects.docs.isEmpty) {
+          return Center(child: Text('No projects found.',style: TextStyle(fontWeight: FontWeight.bold),));
         }
 
         return ListView.builder(
