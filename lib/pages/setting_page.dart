@@ -28,24 +28,34 @@ class _SettingPageState extends State<SettingPage> {
     super.initState();
   }
 
-  // Modify the _fetchUserData method to retrieve data from Firestore
   Future<void> _fetchUserData() async {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
+      try {
+        final userData = await FirebaseFirestore.instance
+            .collection('users')  // Replace 'users' with the appropriate Firestore collection name
+            .doc(user.uid)
+            .get();
 
-      setState(() {
-        _user = user;
-        _newIntroduction = userDoc.data()?['introduction'] ?? '';
-        _newVacation = userDoc.data()?['vacation'] ??  'Student';
-        _newAwayMode = userDoc.data()?['awaymode'] ?? 'Online';
-      });
+        if (userData.exists) {
+          // Get the user data from Firestore
+          final data = userData.data() as Map<String, dynamic>;
+          setState(() {
+            _user = user;
+            _newIntroduction = data['introduction'] ?? '';  // Assuming 'introduction' is a field in Firestore
+            _newVacation = data['vacation'] ?? 'Student';    // Assuming 'vacation' is a field in Firestore
+            _newAwayMode = data['awaymode'] ?? 'Online';    // Assuming 'awaymode' is a field in Firestore
+          });
+        }
+      } catch (e) {
+        print('Error fetching user data from Firestore: $e');
+      }
+    } else {
+      print('User is not authenticated.');
     }
   }
+
 
   Future<void> _changeProfilePicture() async {
     final ImagePicker _picker = ImagePicker();
