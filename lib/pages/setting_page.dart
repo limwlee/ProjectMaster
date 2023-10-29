@@ -47,6 +47,14 @@ class _SettingPageState extends State<SettingPage> {
             _newVacation = data['vacation'] ?? 'Student';    // Assuming 'vacation' is a field in Firestore
             _newAwayMode = data['awaymode'] ?? 'Online';    // Assuming 'awaymode' is a field in Firestore
           });
+        } else {
+          // If the document doesn't exist, you can provide default values or handle it as needed.
+          setState(() {
+            _user = user;
+            _newIntroduction = '';
+            _newVacation = 'Student';
+            _newAwayMode = 'Online';
+          });
         }
       } catch (e) {
         print('Error fetching user data from Firestore: $e');
