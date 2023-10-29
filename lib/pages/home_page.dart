@@ -233,7 +233,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ),
-            // Second Column: Calendar ViewColumn(
+            // Second Column: Calendar View
             Column(
               children: [
                 Expanded(
