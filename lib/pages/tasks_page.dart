@@ -1,6 +1,8 @@
+import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 class TasksPage extends StatefulWidget {
@@ -17,7 +19,20 @@ class _TasksPageState extends State<TasksPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Task Page'),
+        title: AnimatedTextKit(
+          animatedTexts: [
+            WavyAnimatedText('Project Master:Task',
+              speed: const Duration(milliseconds: 200),
+              textStyle: GoogleFonts.lobster(
+                  textStyle: TextStyle(
+                    letterSpacing: 2,
+                    fontWeight: FontWeight.bold,
+                  )
+              ),
+            ),
+          ],
+          repeatForever: true,
+        ),
       ),
       body: _buildPageContent(_currentIndex), // Display content based on the selected index
       bottomNavigationBar: BottomNavigationBar(
@@ -86,7 +101,7 @@ class _TasksPageState extends State<TasksPage> {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return CircularProgressIndicator();
+          return Center(child: CircularProgressIndicator());
         }
 
         if (snapshot.hasError) {
@@ -114,7 +129,7 @@ class _TasksPageState extends State<TasksPage> {
                   .snapshots(),
               builder: (context, taskSnapshot) {
                 if (taskSnapshot.connectionState == ConnectionState.waiting) {
-                  return CircularProgressIndicator();
+                  return Center(child: CircularProgressIndicator());
                 }
 
                 if (taskSnapshot.hasError) {
@@ -141,7 +156,7 @@ class _TasksPageState extends State<TasksPage> {
                         stream: project.reference.snapshots(),
                         builder: (context, projectSnapshot) {
                           if (projectSnapshot.connectionState == ConnectionState.waiting) {
-                            return CircularProgressIndicator();
+                            return Center(child: CircularProgressIndicator());
                           }
 
                           if (projectSnapshot.hasError) {
@@ -212,7 +227,7 @@ class _TasksPageState extends State<TasksPage> {
                       stream: project.reference.snapshots(),
                       builder: (context, projectSnapshot) {
                         if (projectSnapshot.connectionState == ConnectionState.waiting) {
-                          return CircularProgressIndicator();
+                          return Center(child: CircularProgressIndicator());
                         }
 
                         if (projectSnapshot.hasError) {
@@ -248,7 +263,7 @@ class _TasksPageState extends State<TasksPage> {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return CircularProgressIndicator();
+          return Center(child: CircularProgressIndicator());
         }
 
         if (snapshot.hasError) {
@@ -278,7 +293,7 @@ class _TasksPageState extends State<TasksPage> {
                   .snapshots(),
               builder: (context, taskSnapshot) {
                 if (taskSnapshot.connectionState == ConnectionState.waiting) {
-                  return CircularProgressIndicator();
+                  return Center(child: CircularProgressIndicator());
                 }
 
                 if (taskSnapshot.hasError) {
@@ -305,7 +320,7 @@ class _TasksPageState extends State<TasksPage> {
                         stream: project.reference.snapshots(),
                         builder: (context, projectSnapshot) {
                           if (projectSnapshot.connectionState == ConnectionState.waiting) {
-                            return CircularProgressIndicator();
+                            return Center(child: CircularProgressIndicator());
                           }
 
                           if (projectSnapshot.hasError) {
@@ -376,7 +391,7 @@ class _TasksPageState extends State<TasksPage> {
                       stream: project.reference.snapshots(),
                       builder: (context, projectSnapshot) {
                         if (projectSnapshot.connectionState == ConnectionState.waiting) {
-                          return CircularProgressIndicator();
+                          return Center(child: CircularProgressIndicator());
                         }
 
                         if (projectSnapshot.hasError) {
@@ -412,7 +427,7 @@ class _TasksPageState extends State<TasksPage> {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return CircularProgressIndicator();
+          return Center(child: CircularProgressIndicator());
         }
 
         if (snapshot.hasError) {
@@ -438,7 +453,7 @@ class _TasksPageState extends State<TasksPage> {
                   .snapshots(),
               builder: (context, taskSnapshot) {
                 if (taskSnapshot.connectionState == ConnectionState.waiting) {
-                  return CircularProgressIndicator();
+                  return Center(child: CircularProgressIndicator());
                 }
 
                 if (taskSnapshot.hasError) {
@@ -465,7 +480,7 @@ class _TasksPageState extends State<TasksPage> {
                         stream: project.reference.snapshots(),
                         builder: (context, projectSnapshot) {
                           if (projectSnapshot.connectionState == ConnectionState.waiting) {
-                            return CircularProgressIndicator();
+                            return Center(child: CircularProgressIndicator());
                           }
 
                           if (projectSnapshot.hasError) {
@@ -536,7 +551,7 @@ class _TasksPageState extends State<TasksPage> {
                       stream: project.reference.snapshots(),
                       builder: (context, projectSnapshot) {
                         if (projectSnapshot.connectionState == ConnectionState.waiting) {
-                          return CircularProgressIndicator();
+                          return Center(child: CircularProgressIndicator());
                         }
 
                         if (projectSnapshot.hasError) {
@@ -568,7 +583,7 @@ class _TasksPageState extends State<TasksPage> {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return CircularProgressIndicator();
+          return Center(child: CircularProgressIndicator());
         }
 
         if (snapshot.hasError) {
@@ -593,7 +608,7 @@ class _TasksPageState extends State<TasksPage> {
                   .snapshots(),
               builder: (context, taskSnapshot) {
                 if (taskSnapshot.connectionState == ConnectionState.waiting) {
-                  return CircularProgressIndicator();
+                  return Center(child: CircularProgressIndicator());
                 }
 
                 if (taskSnapshot.hasError) {
@@ -621,7 +636,7 @@ class _TasksPageState extends State<TasksPage> {
                         stream: project.reference.snapshots(),
                         builder: (context, projectSnapshot) {
                           if (projectSnapshot.connectionState == ConnectionState.waiting) {
-                            return CircularProgressIndicator();
+                            return Center(child: CircularProgressIndicator());
                           }
 
                           if (projectSnapshot.hasError) {
@@ -680,7 +695,7 @@ class _TasksPageState extends State<TasksPage> {
                       stream: project.reference.snapshots(),
                       builder: (context, projectSnapshot) {
                         if (projectSnapshot.connectionState == ConnectionState.waiting) {
-                          return CircularProgressIndicator();
+                          return Center(child: CircularProgressIndicator());
                         }
 
                         if (projectSnapshot.hasError) {
@@ -714,7 +729,7 @@ class _TasksPageState extends State<TasksPage> {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return CircularProgressIndicator();
+          return Center(child: CircularProgressIndicator());
         }
 
         if (snapshot.hasError) {
@@ -740,7 +755,7 @@ class _TasksPageState extends State<TasksPage> {
                   .snapshots(),
               builder: (context, taskSnapshot) {
                 if (taskSnapshot.connectionState == ConnectionState.waiting) {
-                  return CircularProgressIndicator();
+                  return Center(child: CircularProgressIndicator());
                 }
 
                 if (taskSnapshot.hasError) {
@@ -763,7 +778,7 @@ class _TasksPageState extends State<TasksPage> {
                         stream: project.reference.snapshots(),
                         builder: (context, projectSnapshot) {
                           if (projectSnapshot.connectionState == ConnectionState.waiting) {
-                            return CircularProgressIndicator();
+                            return Center(child: CircularProgressIndicator());
                           }
 
                           if (projectSnapshot.hasError) {
@@ -829,7 +844,7 @@ class _TasksPageState extends State<TasksPage> {
                       stream: project.reference.snapshots(),
                       builder: (context, projectSnapshot) {
                         if (projectSnapshot.connectionState == ConnectionState.waiting) {
-                          return CircularProgressIndicator();
+                          return Center(child: CircularProgressIndicator());
                         }
 
                         if (projectSnapshot.hasError) {

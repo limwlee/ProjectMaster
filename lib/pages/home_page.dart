@@ -1,6 +1,8 @@
+import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:project_master/project.dart';
 import 'package:project_master/project_page.dart';
@@ -70,8 +72,21 @@ class _HomePageState extends State<HomePage> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Home Page'),
-          actions: [],
+          title: AnimatedTextKit(
+              animatedTexts: [
+                WavyAnimatedText('Project Master',
+                  speed: const Duration(milliseconds: 200),
+                  textStyle: GoogleFonts.lobster(
+                      textStyle: TextStyle(
+                        letterSpacing: 2,
+                        fontWeight: FontWeight.bold,
+                      )
+                  ),
+                ),
+              ],
+            repeatForever: true,
+          ),
+          // const Text('Project Master'),
           bottom: TabBar(
             tabs: [
               Tab(text: 'List View'),

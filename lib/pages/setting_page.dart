@@ -1,8 +1,10 @@
 import 'dart:io';
+import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:project_master/login_page.dart';
 
@@ -153,7 +155,20 @@ class _SettingPageState extends State<SettingPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Setting Page'),
+        title: AnimatedTextKit(
+          animatedTexts: [
+            WavyAnimatedText('Project Master:Profile',
+              speed: const Duration(milliseconds: 200),
+              textStyle: GoogleFonts.lobster(
+                  textStyle: TextStyle(
+                    letterSpacing: 2,
+                    fontWeight: FontWeight.bold,
+                  )
+              ),
+            ),
+          ],
+          repeatForever: true,
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -233,6 +248,7 @@ class _SettingPageState extends State<SettingPage> {
                   ),
                 ),
               ),
+            Divider(),
             Row(
               children: [
                 Expanded(

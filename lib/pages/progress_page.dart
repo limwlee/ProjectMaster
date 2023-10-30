@@ -1,6 +1,8 @@
+import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
 class ProgressPage extends StatefulWidget {
@@ -18,7 +20,20 @@ class _ProgressPageState extends State<ProgressPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('ProgressPage'),
+        title: AnimatedTextKit(
+          animatedTexts: [
+            WavyAnimatedText('Project Master: Status',
+              speed: const Duration(milliseconds: 200),
+              textStyle: GoogleFonts.lobster(
+                  textStyle: TextStyle(
+                    letterSpacing: 2,
+                    fontWeight: FontWeight.bold,
+                  )
+              ),
+            ),
+          ],
+          repeatForever: true,
+        ),
       ),
       body: StreamBuilder(
         stream: FirebaseFirestore.instance
@@ -28,7 +43,7 @@ class _ProgressPageState extends State<ProgressPage> {
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return CircularProgressIndicator();
+            return Center(child: CircularProgressIndicator());
           } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return Center(child: Text('No projects found.'));
           } else {
@@ -48,7 +63,7 @@ class _ProgressPageState extends State<ProgressPage> {
                   future: _getProjectTaskCount(project.reference),
                   builder: (context, taskCountSnapshot) {
                     if (taskCountSnapshot.connectionState == ConnectionState.waiting) {
-                      return CircularProgressIndicator();
+                      return Center(child: CircularProgressIndicator());
                     } else {
                       final taskCount = taskCountSnapshot.data as Map<String, dynamic>;
                       final totalTasks = taskCount['total'];
@@ -119,7 +134,7 @@ class _ProgressPageState extends State<ProgressPage> {
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Container(
-                                    width: 150,
+                                    width: 160,
                                     height: 150, // Adjust the height as needed
                                     child: Container(
                                       decoration: BoxDecoration(
@@ -132,8 +147,8 @@ class _ProgressPageState extends State<ProgressPage> {
                                         series: <LineSeries<_ChartData, String>>[
                                           LineSeries<_ChartData, String>(
                                             dataSource: <_ChartData>[
-                                              _ChartData('Completed', completedTasks),
-                                              _ChartData('Incomplete', incompleteTasks),
+                                              _ChartData('Done', completedTasks),
+                                              _ChartData('Not Done', incompleteTasks),
                                             ],
                                             xValueMapper: (_ChartData data, _) => data.x,
                                             yValueMapper: (_ChartData data, _) => data.y,

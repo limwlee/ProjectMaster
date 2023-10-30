@@ -784,19 +784,19 @@ class _ProjectPageState extends State<ProjectPage> {
             TextButton(
               onPressed: () {
                 // User chose to paste
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                // User chose to paste
                 Navigator.of(context).pop(); // Close the dialog.
 
                 String value = noteController.text + "\n" + detectedText;
                 noteController.text = value;
               },
               child: Text('Paste'),
-            ),
-            TextButton(
-              onPressed: () {
-                // User chose to paste
-                Navigator.of(context).pop(); // Close the dialog
-              },
-              child: Text('Cancel'),
             ),
           ],
         ),

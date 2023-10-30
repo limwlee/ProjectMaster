@@ -1,9 +1,12 @@
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:project_master/forgot_password_page.dart';
 import 'package:project_master/main_page.dart';
 import 'package:project_master/registration_page.dart';
+import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -20,13 +23,12 @@ class _LoginPageState extends State<LoginPage> {
 
   String _loginError = '';
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Project Master'),
-      ),
+      // appBar: AppBar(
+      //   title: const Text('Project Master'),
+      // ),
       body: Center(
         child: SingleChildScrollView(
           child: Padding(
@@ -34,6 +36,42 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                AnimatedTextKit(
+                  animatedTexts: [
+                    WavyAnimatedText(
+                      'Project Master',
+                      textStyle: GoogleFonts.lobster(
+                        textStyle: TextStyle(
+                          color: Colors.blue,
+                          fontSize: 40,
+                          letterSpacing: 2,
+                          fontWeight: FontWeight.bold,
+                        )
+                      )
+                    )
+                  ],
+                  repeatForever: true,
+                ),
+                SizedBox(height: 10,),
+                AnimatedTextKit(
+                  animatedTexts: [
+                    TyperAnimatedText(
+                      'Your Project Success, Our Mission with Project Master',
+                      textStyle: GoogleFonts.lobster(
+                        color: Colors.grey,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      speed: const Duration(milliseconds: 100),
+                    ),
+                  ],
+                  repeatForever: true,
+                  pause: const Duration(milliseconds: 2000),
+                  displayFullTextOnTap: true,
+                  stopPauseOnTap: true,
+                ),
+                SizedBox(height: 10,),
+                Divider(),
                 TextField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -58,7 +96,9 @@ class _LoginPageState extends State<LoginPage> {
                     final String password = _passwordController.text;
 
                     try {
-                      final UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+                      final UserCredential userCredential = await FirebaseAuth
+                          .instance
+                          .signInWithEmailAndPassword(
                         email: email,
                         password: password,
                       );
@@ -73,7 +113,8 @@ class _LoginPageState extends State<LoginPage> {
                         // Handle unverified user (optional)
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Email not verified. Please verify your email.'),
+                            content: Text(
+                                'Email not verified. Please verify your email.'),
                           ),
                         );
                       }
@@ -82,7 +123,8 @@ class _LoginPageState extends State<LoginPage> {
                       print('Login error: $e');
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Login failed. Please check your credentials.'),
+                          content: Text(
+                              'Login failed. Please check your credentials.'),
                         ),
                       );
                     }
@@ -98,6 +140,7 @@ class _LoginPageState extends State<LoginPage> {
                   label: Text('Sign In with Google'),
                 ),
                 SizedBox(height: 30),
+                Divider(),
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -128,15 +171,18 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
+
   Future<void> _signInWithGoogle() async {
     try {
-      final GoogleSignInAccount? googleSignInAccount = await _googleSignIn.signIn();
+      final GoogleSignInAccount? googleSignInAccount =
+          await _googleSignIn.signIn();
       if (googleSignInAccount == null) {
         // User canceled the Google Sign-In process
         return;
       }
 
-      final GoogleSignInAuthentication googleSignInAuthentication = await googleSignInAccount.authentication;
+      final GoogleSignInAuthentication googleSignInAuthentication =
+          await googleSignInAccount.authentication;
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleSignInAuthentication.accessToken,
         idToken: googleSignInAuthentication.idToken,
@@ -144,13 +190,14 @@ class _LoginPageState extends State<LoginPage> {
 
       await _googleSignIn.signOut();
 
-      final UserCredential userCredential = await _auth.signInWithCredential(credential);
+      final UserCredential userCredential =
+          await _auth.signInWithCredential(credential);
 
       if (userCredential.user != null) {
         Navigator.of(context).pushReplacement(MaterialPageRoute(
           builder: (context) => MainPage(),
         ));
-      }else {
+      } else {
         setState(() {
           _loginError = 'Google Sign-In failed. Please try again.';
         });
@@ -162,5 +209,4 @@ class _LoginPageState extends State<LoginPage> {
       });
     }
   }
-
 }
