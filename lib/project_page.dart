@@ -1,7 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-//import 'package:google_ml_kit/google_ml_kit.dart';
+import 'package:google_ml_kit/google_ml_kit.dart';
+//import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:project_master/pages/home_page.dart';
@@ -713,7 +714,7 @@ class _ProjectPageState extends State<ProjectPage> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  //_textScanner();
+                  _textScanner();
                 },
                 child: Text('Text Scanner'),
               ),
@@ -724,69 +725,88 @@ class _ProjectPageState extends State<ProjectPage> {
     );
   }
 
-//   Future<void> _textScanner() async {
-//     // Create an instance of the image picker
-//     final picker = ImagePicker();
-//
-//     // Show a dialog to let the user choose between taking a photo or selecting from the gallery
-//     showDialog(
-//       context: context,
-//       builder: (context) => AlertDialog(
-//         title: Text('Choose an option'),
-//         content: Text('Take a photo or select from the gallery?'),
-//         actions: <Widget>[
-//           TextButton(
-//             child: Text('Take a Photo'),
-//             onPressed: () async {
-//               Navigator.of(context).pop();
-//               final pickedFile = await picker.pickImage(source: ImageSource.camera);
-//               if (pickedFile != null) {
-//                 // Perform text recognition on the taken photo
-//                 _processImage(pickedFile.path);
-//               }
-//             },
-//           ),
-//           TextButton(
-//             child: Text('Select from Gallery'),
-//             onPressed: () async {
-//               Navigator.of(context).pop();
-//               final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-//               if (pickedFile != null) {
-//                 // Perform text recognition on the selected image
-//                 _processImage(pickedFile.path);
-//               }
-//             },
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// // Function to perform text recognition on an image
-//   Future<void> _processImage(String imagePath) async {
-//     final textRecognizer = GoogleMlKit.vision.textRecognizer();
-//
-//     try {
-//       final inputImage = InputImage.fromFilePath(imagePath);
-//       final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
-//
-//       String detectedText = recognizedText.text;
-//
-//       print('Detected Text: $detectedText');
-//
-//       // You can handle the detected text as needed, for example, display it in a dialog or update the UI
-//       showDialog(
-//         context: context,
-//         builder: (context) => AlertDialog(
-//           title: Text('Detected Text'),
-//           content: Text(detectedText),
-//         ),
-//       );
-//     } catch (e) {
-//       print('Error recognizing text: $e');
-//     } finally {
-//       textRecognizer.close();
-//     }
-//   }
+  Future<void> _textScanner() async {
+    // Create an instance of the image picker
+    final picker = ImagePicker();
+
+    // Show a dialog to let the user choose between taking a photo or selecting from the gallery
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Choose an option'),
+        content: Text('Take a photo or select from the gallery?'),
+        actions: <Widget>[
+          TextButton(
+            child: Text('Take a Photo'),
+            onPressed: () async {
+              Navigator.of(context).pop();
+              final pickedFile = await picker.pickImage(source: ImageSource.camera);
+              if (pickedFile != null) {
+                // Perform text recognition on the taken photo
+                _processImage(pickedFile.path);
+              }
+            },
+          ),
+          TextButton(
+            child: Text('Select from Gallery'),
+            onPressed: () async {
+              Navigator.of(context).pop();
+              final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+              if (pickedFile != null) {
+                // Perform text recognition on the selected image
+               _processImage(pickedFile.path);
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+// Function to perform text recognition on an image
+  Future<void> _processImage(String imagePath) async {
+    final textRecognizer = GoogleMlKit.vision.textRecognizer();
+
+    try {
+      final inputImage = InputImage.fromFilePath(imagePath);
+      final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
+
+      String detectedText = recognizedText.text;
+
+      print('Detected Text: $detectedText');
+
+      // You can handle the detected text as needed, for example, display it in a dialog or update the UI
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Detected Text'),
+          content: Text(detectedText),
+          actions: [
+            TextButton(
+              onPressed: () {
+                // User chose to paste
+                Navigator.of(context).pop(); // Close the dialog.
+
+                String value = noteController.text + "\n" + detectedText;
+                noteController.text = value;
+              },
+              child: Text('Paste'),
+            ),
+            TextButton(
+              onPressed: () {
+                // User chose to paste
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text('Cancel'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      print('Error recognizing text: $e');
+    } finally {
+      textRecognizer.close();
+    }
+  }
 
   Future<DateTime?> _pickProjectDeadline(BuildContext context, DateTime? initialDate) async {
     DateTime currentDate = DateTime.now();
@@ -1152,5 +1172,3 @@ class _ProjectPageState extends State<ProjectPage> {
     );
   }
 }
-
-
