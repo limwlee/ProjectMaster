@@ -1021,6 +1021,7 @@ class _ProjectPageState extends State<ProjectPage> {
                 height: 10,
               ),
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     "Tasks:",
@@ -1029,6 +1030,9 @@ class _ProjectPageState extends State<ProjectPage> {
                       fontSize: 20,
                     ),
                   ),
+                  Text('(Hold to edit)',style: TextStyle(
+                    color: Colors.grey,
+                  ),)
                 ],
               ),
               SizedBox(

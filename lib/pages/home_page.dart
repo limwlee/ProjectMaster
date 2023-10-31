@@ -118,6 +118,21 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
                 ),
+                Container(
+                  height: 20,
+                  child: AnimatedTextKit(
+                    animatedTexts: [
+                      FadeAnimatedText(
+                          '(Slide to Delete)',
+                          textStyle: TextStyle(
+                            color: Colors.grey,
+                            letterSpacing: 2,
+                          )
+                      )
+                    ],
+                    repeatForever: true,
+                  ),
+                ),
                 Expanded(
                   child: StreamBuilder<QuerySnapshot>(
                     stream: _firestore

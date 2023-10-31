@@ -1,5 +1,7 @@
+import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:project_master/login_page.dart';
 
 class RegistrationPage extends StatefulWidget {
@@ -17,14 +19,49 @@ class _RegistrationPageState extends State<RegistrationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Registration'),
-      ),
+      // appBar: AppBar(
+      //   //title: Text('Registration'),
+      // ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            AnimatedTextKit(
+              animatedTexts: [
+                WavyAnimatedText(
+                    'Project Master',
+                    textStyle: GoogleFonts.lobster(
+                        textStyle: TextStyle(
+                          color: Colors.blue,
+                          fontSize: 40,
+                          letterSpacing: 2,
+                          fontWeight: FontWeight.bold,
+                        )
+                    )
+                )
+              ],
+              repeatForever: true,
+            ),
+            Divider(),
+            AnimatedTextKit(
+              animatedTexts: [
+                TypewriterAnimatedText(
+                    'Registration',
+                    speed: Duration(milliseconds: 300),
+                    textStyle: GoogleFonts.lobster(
+                        textStyle: TextStyle(
+                          color: Colors.blue,
+                          fontSize: 35,
+                          letterSpacing: 2,
+                          fontWeight: FontWeight.bold,
+                        )
+                    )
+                )
+              ],
+              repeatForever: true,
+            ),
+            Divider(),
             TextField(
               controller: _firstNameController,
               decoration: InputDecoration(
