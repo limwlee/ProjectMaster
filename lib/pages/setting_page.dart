@@ -19,7 +19,7 @@ class SettingPage extends StatefulWidget {
 class _SettingPageState extends State<SettingPage> {
   User? _user;
   String? _newIntroduction = '';
-  String? _newVacation = 'Student'; // Default value
+  String? _newPosition = 'Student'; // Default value
   String? _newAwayMode = 'Online'; // Default value
 
 
@@ -46,15 +46,14 @@ class _SettingPageState extends State<SettingPage> {
           setState(() {
             _user = user;
             _newIntroduction = data['introduction'] ?? '';  // Assuming 'introduction' is a field in Firestore
-            _newVacation = data['vacation'] ?? 'Student';    // Assuming 'vacation' is a field in Firestore
+            _newPosition = data['Position'] ?? 'Student';    // Assuming 'Position' is a field in Firestore
             _newAwayMode = data['awaymode'] ?? 'Online';    // Assuming 'awaymode' is a field in Firestore
           });
         } else {
-          // If the document doesn't exist, you can provide default values or handle it as needed.
           setState(() {
             _user = user;
             _newIntroduction = '';
-            _newVacation = 'Student';
+            _newPosition = 'Student';
             _newAwayMode = 'Online';
           });
         }
@@ -233,7 +232,7 @@ class _SettingPageState extends State<SettingPage> {
                       Divider(),
                       Text('Away Mode: ${_newAwayMode ?? 'N/A'}'),
                       Divider(),
-                      Text('Vacation: ${_newVacation ?? 'N/A'}'),
+                      Text('Position: ${_newPosition ?? 'N/A'}'),
                       Divider(),
                       Text('UID: ${_user!.uid}'),
                       Divider(),
@@ -270,7 +269,7 @@ class _SettingPageState extends State<SettingPage> {
   void _handleLogout(BuildContext context) async {
     try {
       await FirebaseAuth.instance.signOut();
-      // After successful logout, you can navigate to the login page or any other page as needed.
+      // After successful logout,navigate to the login page
       Navigator.of(context).pushReplacement(MaterialPageRoute(
         builder: (context)=>LoginPage(),
       )); // Replace with your login route
@@ -344,19 +343,19 @@ class _SettingPageState extends State<SettingPage> {
               ),
               SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _newVacation,
+                value: _newPosition,
                 onChanged: (value) {
                   setState(() {
-                    _newVacation = value;
+                    _newPosition = value;
                   });
                 },
                 items: ['Student', 'Worker', 'Lecturer']
-                    .map((vacation) => DropdownMenuItem<String>(
-                  value: vacation,
-                  child: Text(vacation),
+                    .map((position) => DropdownMenuItem<String>(
+                  value: position,
+                  child: Text(position),
                 ))
                     .toList(),
-                decoration: InputDecoration(labelText: 'Vacation'),
+                decoration: InputDecoration(labelText: 'Position'),
               ),
             ],
           ),
@@ -370,7 +369,7 @@ class _SettingPageState extends State<SettingPage> {
             TextButton(
               onPressed: () async {
                 final introduction = _newIntroduction;
-                final vacation = _newVacation;
+                final position = _newPosition;
                 final away = _newAwayMode;
 
                 // Check if the project name and description are not empty
@@ -389,7 +388,7 @@ class _SettingPageState extends State<SettingPage> {
 
                 final Map<String, dynamic> profileData = {
                   'introduction': introduction,
-                  'vacation': vacation,
+                  'position': position,
                   'awaymode': away,
                 };
 

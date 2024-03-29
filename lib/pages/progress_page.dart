@@ -103,7 +103,7 @@ class _ProgressPageState extends State<ProgressPage> {
                                   width: 100,  // Set the desired width
                                   height: 100,
                                   decoration: BoxDecoration(
-                                    color: Colors.grey,
+                                    color: Colors.blueGrey,
                                     borderRadius: BorderRadius.circular(20.0),
                                   ),// Set the desired height
                                   child: SfCircularChart(

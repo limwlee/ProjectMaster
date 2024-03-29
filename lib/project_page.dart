@@ -882,7 +882,7 @@ class _ProjectPageState extends State<ProjectPage> {
 
       if (duplicateConfirmed == true) {
         // Create a new project with similar details and tasks
-        final newProjectRef = await FirebaseFirestore.instance
+        await FirebaseFirestore.instance
             .collection('users')
             .doc(userUid)
             .collection('projects')
@@ -890,8 +890,6 @@ class _ProjectPageState extends State<ProjectPage> {
           'name': projectData['name'] + ' (Copy)', // Update the project name
           'description': projectData['description'],
           'deadline': projectData['deadline'],
-          // You may need to duplicate the tasks as well
-          // Implement logic to duplicate tasks here
         });
 
         // Optionally navigate to the duplicated project's page

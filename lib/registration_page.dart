@@ -133,7 +133,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   // Handle the specific registration error
                   print('Registration error: $e');
 
-                  // You can provide user-friendly error messages based on the error type
+                  //provide user-friendly error messages based on the error type
                   if (e is FirebaseAuthException) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
